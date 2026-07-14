@@ -172,6 +172,31 @@ body {
 .bar.pivot { outline: 2px solid #fff; }
 .bar.sorted { background: linear-gradient(180deg, #9fe0ae, var(--ok)); }
 
+.live-desc {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--wood);
+  background: var(--parchment-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 18px;
+}
+
+.bar-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+  background: var(--gold);
+}
+.legend-swatch.compare { background: var(--warn); }
+.legend-swatch.swap { background: var(--danger); }
+.legend-swatch.sorted { background: var(--ok); }
+.legend-swatch.pivot { background: var(--gold); outline: 2px solid #fff; }
+
 #stage-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 #stage-actions button, #control-bar button {
   padding: 8px 16px;

@@ -446,6 +446,7 @@ function buildQuickRuntime() {
     quick: {
       arr: [...values], events, eventIdx: -1, comparisons, swaps,
       done: false, highlight: null, opsSoFar: 0,
+      liveDesc: '「再生」ボタンか「1ステップ」でクイックソートを開始します。',
     },
   };
 }
@@ -458,20 +459,31 @@ function advanceQuickEvents(state, api, count) {
     if (q.eventIdx >= q.events.length) { q.done = true; break; }
     const ev = q.events[q.eventIdx];
     if (ev.type === 'swap') {
+      const a = q.arr[ev.i];
+      const b = q.arr[ev.j];
       [q.arr[ev.i], q.arr[ev.j]] = [q.arr[ev.j], q.arr[ev.i]];
       q.highlight = { compare: [], swap: [ev.i, ev.j], pivot: q.highlight?.pivot ?? null };
+      q.liveDesc = `${a} と ${b} の位置を交換しました。`;
     } else if (ev.type === 'compare') {
       q.opsSoFar += 1;
       q.highlight = { compare: [ev.i, ev.j], swap: [], pivot: q.highlight?.pivot ?? null };
+      const val = q.arr[ev.i];
+      const pivotVal = q.arr[ev.j];
+      q.liveDesc = `${val} を基準の${pivotVal}と比較中…${val < pivotVal ? '基準より小さいので左側へ' : '基準以上なのでそのまま'}`;
     } else if (ev.type === 'pivot') {
       q.highlight = { compare: [], swap: [], pivot: ev.index };
+      q.liveDesc = `基準(ピボット)として ${q.arr[ev.index]} を選びました。`;
+      api.log(`基準(ピボット)として ${q.arr[ev.index]} を選びました。`);
     } else if (ev.type === 'partitionDone') {
       q.highlight = { compare: [], swap: [], pivot: null };
+      q.liveDesc = `基準 ${q.arr[ev.index]} の位置が確定！ 左側は基準未満、右側は基準以上に分かれました。`;
+      api.log(`基準 ${q.arr[ev.index]} の位置が確定。左は基準未満・右は基準以上に分かれました。`, 'ok');
     } else if (ev.type === 'done') {
       q.done = true;
     }
   }
   if (q.done) {
+    q.liveDesc = '並べ替え完了！';
     api.log(`クイックソート完了！比較${q.comparisons}回、交換${q.swaps}回。バブルソートよりずっと少ない操作数で終わりました。`, 'ok');
     api.setStatus(`完了：比較${q.comparisons}回`, 'ok');
     state.playing = false;
@@ -493,6 +505,12 @@ function renderQuickVisual(container, state) {
   info.className = 'stage-info';
   info.textContent = `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`;
   container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = q.liveDesc;
+  container.appendChild(live);
+
   const barsBox = document.createElement('div');
   renderBars(barsBox, q.arr, {
     compare: q.highlight?.compare ?? [],
@@ -501,6 +519,25 @@ function renderQuickVisual(container, state) {
     allSorted: q.done,
   });
   container.appendChild(barsBox);
+
+  renderBarLegend(container, [
+    { cls: 'pivot', label: '基準（ピボット）' },
+    { cls: 'compare', label: '比較中' },
+    { cls: 'swap', label: '交換' },
+    { cls: 'sorted', label: '確定' },
+  ]);
+}
+
+function renderBarLegend(container, entries) {
+  const legend = document.createElement('div');
+  legend.className = 'bar-legend';
+  entries.forEach(({ cls, label }) => {
+    const item = document.createElement('span');
+    item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-swatch ${cls}"></span>${escapeHtml(label)}`;
+    legend.appendChild(item);
+  });
+  container.appendChild(legend);
 }
 
 function renderQuickActions(container, state, api) {
@@ -526,10 +563,12 @@ function renderQuickActions(container, state, api) {
 const STAGE_QUICK = {
   navLabel: '④クイックソート',
   title: '第4章 荷物の山、再び ― クイックソート ―',
-  missionText: '今度はもっと多くの荷物を「クイックソート」で一気に並べ替えよう。',
+  missionText: '「基準（ピボット）」を1つ選び、それより小さい荷物は左、大きい荷物は右に仕分ける。これを繰り返して並べ替えよう。',
   dialogue: [
     { who: '村長', text: '今度はさらに大量の荷物です。バブルソートでは日が暮れてしまいますね…。' },
-    { who: 'あなた', text: 'では「クイックソート」を使いましょう。基準を決めて、一気に仕分けます。' },
+    { who: 'あなた', text: 'では「クイックソート」を使いましょう。まず適当な荷物を1つ「基準」に選びます。' },
+    { who: 'あなた', text: '基準より軽い荷物は左へ、重い荷物は右へ仕分けたら、基準の位置が確定します。' },
+    { who: 'あなた', text: 'あとは左側・右側それぞれの中で、同じことをもう一度繰り返すだけです。' },
   ],
   build() {
     return { runtime: buildQuickRuntime() };
