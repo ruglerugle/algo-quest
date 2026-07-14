@@ -8,6 +8,18 @@ import {
 } from './algorithms.js';
 import { escapeHtml } from './ui.js';
 
+/** 一定間隔(秒)ごとにstepFnを1回呼ぶ、再生/一時停止共通の自動進行ヘルパー */
+function tickAtInterval(state, dt, speed, api, intervalSeconds, isDone, stepFn) {
+  const rt = state.stageRuntime;
+  if (isDone(rt)) return;
+  rt._accum = (rt._accum ?? 0) + dt * speed;
+  while (rt._accum >= intervalSeconds && !isDone(rt)) {
+    stepFn(state, api);
+    rt._accum -= intervalSeconds;
+  }
+  if (isDone(rt)) state.playing = false;
+}
+
 // ============================================================
 // ステージ0: 線形探索
 // ============================================================
@@ -68,7 +80,7 @@ function advanceLinearPhase(state, api) {
 
 function tickLinear(state, dt, speed, api) {
   const rt = state.stageRuntime;
-  if (rt.phaseDef.mode !== 'auto' || rt.linear.found || rt.linear.exhausted) return;
+  if (rt.linear.found || rt.linear.exhausted) return;
   const steps = Math.max(1, Math.round(rt.autoBatch * speed));
   advanceLinearAuto(state, api, steps);
 }
@@ -164,7 +176,6 @@ const STAGE_LINEAR = {
   },
   renderVisual: renderLinearVisual,
   renderActions: renderLinearActions,
-  usesControlBar: (state) => state.stageRuntime.phaseDef.mode === 'auto',
   tick: tickLinear,
   stepOnce: (state, api) => advanceLinearAuto(state, api, 1),
   statusInfo: (state) => ({
@@ -277,7 +288,12 @@ const STAGE_BINARY = {
   },
   renderVisual: renderBinaryVisual,
   renderActions: renderBinaryActions,
-  usesControlBar: () => false,
+  tick: (state, dt, speed, api) => tickAtInterval(
+    state, dt, speed, api, 0.5,
+    (rt) => rt.binary.found || rt.binary.exhausted,
+    doBinaryCheck,
+  ),
+  stepOnce: doBinaryCheck,
   statusInfo: (state) => ({
     name: '二分探索 (Binary Search)',
     complexity: 'O(log N)',
@@ -406,7 +422,12 @@ const STAGE_BUBBLE = {
   },
   renderVisual: renderBubbleVisual,
   renderActions: renderBubbleActions,
-  usesControlBar: () => false,
+  tick: (state, dt, speed, api) => tickAtInterval(
+    state, dt, speed, api, 0.12,
+    (rt) => rt.bubble.sorted,
+    doBubbleStep,
+  ),
+  stepOnce: doBubbleStep,
   statusInfo: (state) => ({
     name: 'バブルソート (Bubble Sort)',
     complexity: 'O(N²)',
@@ -515,7 +536,6 @@ const STAGE_QUICK = {
   },
   renderVisual: renderQuickVisual,
   renderActions: renderQuickActions,
-  usesControlBar: () => true,
   tick: tickQuick,
   stepOnce: (state, api) => advanceQuickEvents(state, api, 1),
   statusInfo: (state) => ({

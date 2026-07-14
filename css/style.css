@@ -200,7 +200,7 @@ body {
 .algo-meta span, .algo-ops span { color: var(--text); font-weight: 700; }
 
 #control-bar {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 10px;
   background: var(--parchment-2);

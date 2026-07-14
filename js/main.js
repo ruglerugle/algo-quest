@@ -14,12 +14,10 @@ const gameState = {
 
 const visualEl = document.getElementById('visual-stage');
 const actionsEl = document.getElementById('stage-actions');
-const controlBarEl = document.getElementById('control-bar');
 
 function render() {
   ui.renderStageVisual(visualEl, gameState.stageDef, gameState, API);
   ui.renderStatusBox(gameState.stageDef, gameState);
-  controlBarEl.style.display = gameState.stageDef.usesControlBar(gameState) ? 'flex' : 'none';
 }
 
 const API = {
