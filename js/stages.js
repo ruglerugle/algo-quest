@@ -340,6 +340,10 @@ function renderBars(container, arr, opts = {}) {
     if (opts.pivot === idx) bar.classList.add('pivot');
     if (opts.sortedFrom !== undefined && idx >= opts.sortedFrom) bar.classList.add('sorted');
     if (opts.allSorted) bar.classList.add('sorted');
+    const label = document.createElement('span');
+    label.className = 'bar-value';
+    label.textContent = val;
+    bar.appendChild(label);
     wrap.appendChild(bar);
   });
   container.appendChild(wrap);
