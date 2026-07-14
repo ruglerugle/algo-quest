@@ -548,7 +548,7 @@ function renderQuickActions(container, state, api) {
     next.textContent = 'ステージクリア！';
     next.addEventListener('click', () => {
       api.completeStage();
-      api.log('見事、王国の物流に必要なアルゴリズムを一通り身につけました！', 'ok');
+      api.log('並べ替えの技はここまで。次は洞窟の奥に眠るお宝を目指しましょう。', 'ok');
       api.render();
     });
     container.appendChild(next);
@@ -584,4 +584,405 @@ const STAGE_QUICK = {
   }),
 };
 
-export const STAGES = [STAGE_LINEAR, STAGE_BINARY, STAGE_BUBBLE, STAGE_QUICK];
+// ============================================================
+// ステージ4: スタック
+// ============================================================
+
+const CAVE_TREE = {
+  id: 'entrance', label: '入口', children: [
+    {
+      id: 'hallA', label: '広間A', children: [
+        { id: 'deadend1', label: '行き止まり…宝はありません', children: [] },
+        {
+          id: 'roomB', label: '小部屋B', children: [
+            { id: 'deadend2', label: '行き止まり…宝はありません', children: [] },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'hallC', label: '広間C', children: [
+        { id: 'deadend3', label: '行き止まり…宝はありません', children: [] },
+        { id: 'treasure', label: '宝物庫', children: [], isTreasure: true },
+      ],
+    },
+  ],
+};
+
+function buildStackRuntime() {
+  return { stack: [CAVE_TREE], explored: {}, operations: 0, cleared: false };
+}
+
+function doPush(state, api) {
+  const rt = state.stageRuntime;
+  const current = rt.stack[rt.stack.length - 1];
+  const idx = rt.explored[current.id] || 0;
+  const child = current.children[idx];
+  rt.stack.push(child);
+  rt.operations += 1;
+  api.log(`「${child.label}」へ進みました。(Push)`);
+  if (child.isTreasure) {
+    rt.cleared = true;
+    api.log('宝物庫を発見しました！', 'ok');
+    api.setStatus(`発見！操作回数: ${rt.operations}`, 'ok');
+    state.playing = false;
+  } else if (child.children.length === 0) {
+    api.log(`「${child.label}」…先へは進めません。`, 'err');
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function doPop(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.stack.length <= 1) return;
+  const popped = rt.stack.pop();
+  const parent = rt.stack[rt.stack.length - 1];
+  rt.explored[parent.id] = (rt.explored[parent.id] || 0) + 1;
+  rt.operations += 1;
+  api.log(`「${popped.label}」から「${parent.label}」へ戻りました。(Pop)`);
+  api.refreshActions();
+  api.render();
+}
+
+function doCaveStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) return;
+  const current = rt.stack[rt.stack.length - 1];
+  const idx = rt.explored[current.id] || 0;
+  if (current.children.length > idx) {
+    doPush(state, api);
+  } else if (rt.stack.length > 1) {
+    doPop(state, api);
+  }
+}
+
+function renderStackVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `スタックの深さ: ${rt.stack.length} / 操作回数: ${rt.operations}`;
+  container.appendChild(info);
+
+  const current = rt.stack[rt.stack.length - 1];
+  const idx = rt.explored[current.id] || 0;
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.cleared
+    ? '宝物庫を発見しました！'
+    : (current.children.length > idx
+      ? `現在地:「${current.label}」。奥へ進めます。`
+      : `現在地:「${current.label}」。これ以上は進めません…戻りましょう。`);
+  container.appendChild(live);
+
+  const tower = document.createElement('div');
+  tower.className = 'stack-tower';
+  [...rt.stack].reverse().forEach((node, i) => {
+    const box = document.createElement('div');
+    box.className = 'stack-room';
+    if (i === 0) box.classList.add('top');
+    if (node.isTreasure) box.classList.add('treasure');
+    if (node.children.length === 0 && !node.isTreasure) box.classList.add('deadend');
+    box.textContent = node.label;
+    tower.appendChild(box);
+  });
+  container.appendChild(tower);
+}
+
+function renderStackActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('スタックの「後入れ先出し(LIFO)」のおかげで、迷わず正しい順番で引き返せました。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const current = rt.stack[rt.stack.length - 1];
+  const idx = rt.explored[current.id] || 0;
+  if (current.children.length > idx) {
+    const child = current.children[idx];
+    const btn = document.createElement('button');
+    btn.textContent = `「${child.label}」へ進む (Push)`;
+    btn.addEventListener('click', () => doPush(state, api));
+    container.appendChild(btn);
+  } else if (rt.stack.length > 1) {
+    const btn = document.createElement('button');
+    btn.textContent = '戻る (Pop)';
+    btn.addEventListener('click', () => doPop(state, api));
+    container.appendChild(btn);
+  }
+}
+
+const STAGE_STACK = {
+  navLabel: '⑤スタック',
+  title: '第5章 洞窟の奥 ― スタック ―',
+  missionText: '一本道の洞窟を奥へ進み(Push)、行き止まりなら戻り(Pop)ながら、宝物庫を目指そう。',
+  dialogue: [
+    { who: '村長', text: '洞窟の奥に眠るお宝を取ってきてほしいのです。ただし道は入り組んでいて、行き止まりも多いとか…。' },
+    { who: 'あなた', text: '進んだ道は覚えておいて、行き止まりならさっき来た道をそのまま戻ればいいですね。' },
+  ],
+  build() {
+    return { runtime: buildStackRuntime() };
+  },
+  renderVisual: renderStackVisual,
+  renderActions: renderStackActions,
+  tick: (state, dt, speed, api) => tickAtInterval(
+    state, dt, speed, api, 0.4,
+    (rt) => rt.cleared,
+    doCaveStep,
+  ),
+  stepOnce: doCaveStep,
+  statusInfo: (state) => ({
+    name: 'スタック (Stack)',
+    complexity: 'Push/Pop: O(1)',
+    operations: state.stageRuntime.operations,
+  }),
+};
+
+// ============================================================
+// ステージ5: キュー
+// ============================================================
+
+const QUEUE_NAMES = ['アリス', 'ボブ', 'キャロル', 'ダイスケ', 'エミリー', 'フランク', 'グレース', 'ヒロシ', 'イブ', 'ジャック', 'カレン', 'レオ'];
+
+function buildQueueRuntime() {
+  const queue = QUEUE_NAMES.slice(0, 4).map((name, i) => ({ id: i, name }));
+  return { queue, nextArrivalIdx: 4, served: 0, operations: 0, done: false };
+}
+
+function doServe(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.queue.length === 0) return;
+  const customer = rt.queue.shift();
+  rt.served += 1;
+  rt.operations += 1;
+  api.log(`先頭の「${customer.name}」さんをご案内しました。(Dequeue)`, 'ok');
+  if (rt.nextArrivalIdx < QUEUE_NAMES.length) {
+    const name = QUEUE_NAMES[rt.nextArrivalIdx];
+    rt.nextArrivalIdx += 1;
+    rt.queue.push({ id: rt.nextArrivalIdx, name });
+    rt.operations += 1;
+    api.log(`新しく「${name}」さんが列の最後尾に並びました。(Enqueue)`);
+  }
+  if (rt.queue.length === 0 && rt.nextArrivalIdx >= QUEUE_NAMES.length) {
+    rt.done = true;
+    api.log('列に並んでいたお客様、全員のご案内が完了しました！', 'ok');
+    api.setStatus(`完了：ご案内${rt.served}人`, 'ok');
+    state.playing = false;
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function renderQueueTrack(container, items, renderCard) {
+  const track = document.createElement('div');
+  track.className = 'queue-track';
+  items.forEach((item, i) => track.appendChild(renderCard(item, i)));
+  container.appendChild(track);
+}
+
+function renderQueueVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `列に並んでいる人数: ${rt.queue.length}人 / ご案内済み: ${rt.served}人 / 操作回数: ${rt.operations}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.done
+    ? '全員のご案内が完了しました！'
+    : (rt.queue.length ? `先頭:「${rt.queue[0].name}」さんをご案内できます。` : '次のお客様の到着を待っています…');
+  container.appendChild(live);
+
+  renderQueueTrack(container, rt.queue, (c, i) => {
+    const card = document.createElement('div');
+    card.className = 'queue-card';
+    if (i === 0) card.classList.add('front');
+    card.innerHTML = `<span class="tag">${i === 0 ? '先頭' : `${i + 1}番目`}</span><span class="name">${escapeHtml(c.name)}</span>`;
+    return card;
+  });
+}
+
+function renderQueueActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.done) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('キューの「先入れ先出し(FIFO)」のおかげで、来た順番どおり公平にご案内できました。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '先頭のお客様をご案内する (Dequeue)';
+  btn.disabled = rt.queue.length === 0;
+  btn.addEventListener('click', () => doServe(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_QUEUE = {
+  navLabel: '⑥キュー',
+  title: '第6章 パン屋の行列 ― キュー ―',
+  missionText: '並んでいるお客様を、先頭から順番にご案内しよう。割り込みはできません。',
+  dialogue: [
+    { who: 'パン屋の店主', text: 'お客さんが並び始めました。手伝ってもらえますか？' },
+    { who: 'あなた', text: 'もちろんです。並んだ順番どおり、先頭の方からご案内しますね。' },
+  ],
+  build() {
+    return { runtime: buildQueueRuntime() };
+  },
+  renderVisual: renderQueueVisual,
+  renderActions: renderQueueActions,
+  tick: (state, dt, speed, api) => tickAtInterval(
+    state, dt, speed, api, 0.35,
+    (rt) => rt.done,
+    doServe,
+  ),
+  stepOnce: doServe,
+  statusInfo: (state) => ({
+    name: 'キュー (Queue)',
+    complexity: 'Enqueue/Dequeue: O(1)',
+    operations: state.stageRuntime.operations,
+  }),
+};
+
+// ============================================================
+// ステージ6: 優先度付きキュー
+// ============================================================
+
+const SEVERITY_LABEL = { 1: '軽症', 2: '中等症', 3: '重症' };
+
+const PATIENT_POOL = [
+  { name: 'ナオキ', severity: 1 },
+  { name: 'ユミ', severity: 2 },
+  { name: 'ワタル', severity: 1 },
+  { name: 'ミサキ', severity: 3 },
+  { name: 'ケンジ', severity: 2 },
+  { name: 'クミコ', severity: 1 },
+  { name: 'グレース', severity: 3 },
+  { name: 'カレン', severity: 2 },
+];
+
+function buildPQRuntime() {
+  const waiting = PATIENT_POOL.slice(0, 3).map((p, i) => ({ ...p, id: i }));
+  return { waiting, nextArrivalIdx: 3, diagnosed: 0, operations: 0, done: false };
+}
+
+function doDiagnose(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.waiting.length === 0) return;
+  let bestIdx = 0;
+  for (let i = 1; i < rt.waiting.length; i += 1) {
+    if (rt.waiting[i].severity > rt.waiting[bestIdx].severity) bestIdx = i;
+  }
+  const patient = rt.waiting.splice(bestIdx, 1)[0];
+  rt.diagnosed += 1;
+  rt.operations += 1;
+  const cls = patient.severity === 3 ? 'err' : patient.severity === 1 ? 'ok' : '';
+  api.log(`${SEVERITY_LABEL[patient.severity]}の「${patient.name}」さんを診察しました。`, cls);
+  if (rt.nextArrivalIdx < PATIENT_POOL.length) {
+    const arriving = PATIENT_POOL[rt.nextArrivalIdx];
+    rt.nextArrivalIdx += 1;
+    rt.waiting.push({ ...arriving, id: rt.nextArrivalIdx });
+    rt.operations += 1;
+    api.log(`新しく${SEVERITY_LABEL[arriving.severity]}の「${arriving.name}」さんが来院しました。`);
+  }
+  if (rt.waiting.length === 0 && rt.nextArrivalIdx >= PATIENT_POOL.length) {
+    rt.done = true;
+    api.log('待合室の患者様、全員の診察が完了しました！', 'ok');
+    api.setStatus(`完了：診察${rt.diagnosed}人`, 'ok');
+    state.playing = false;
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function renderPQVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `待合室の人数: ${rt.waiting.length}人 / 診察済み: ${rt.diagnosed}人 / 操作回数: ${rt.operations}`;
+  container.appendChild(info);
+
+  const sorted = [...rt.waiting].sort((a, b) => b.severity - a.severity);
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.done
+    ? '全員の診察が完了しました！'
+    : (sorted.length ? `次に診察: ${SEVERITY_LABEL[sorted[0].severity]}の「${sorted[0].name}」さん` : '次の患者の来院を待っています…');
+  container.appendChild(live);
+
+  renderQueueTrack(container, sorted, (p, i) => {
+    const card = document.createElement('div');
+    card.className = `queue-card severity-${p.severity}`;
+    if (i === 0) card.classList.add('front');
+    card.innerHTML = `<span class="tag">${SEVERITY_LABEL[p.severity]}</span><span class="name">${escapeHtml(p.name)}</span>`;
+    return card;
+  });
+}
+
+function renderPQActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.done) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('優先度付きキューのおかげで、来院順ではなく症状の重さで公平に診察できました。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '次に診察する（最優先の患者）';
+  btn.disabled = rt.waiting.length === 0;
+  btn.addEventListener('click', () => doDiagnose(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_PQUEUE = {
+  navLabel: '⑦優先度付きキュー',
+  title: '第7章 救急病院 ― 優先度付きキュー ―',
+  missionText: '待合室では、来た順番ではなく症状が重い患者様から診察しよう。',
+  dialogue: [
+    { who: '看護師', text: '先生、待合室に患者様が増えてきました。順番にご案内しますか？' },
+    { who: 'あなた', text: 'いいえ、症状が重い方を優先します。来た順番は関係ありません。' },
+  ],
+  build() {
+    return { runtime: buildPQRuntime() };
+  },
+  renderVisual: renderPQVisual,
+  renderActions: renderPQActions,
+  tick: (state, dt, speed, api) => tickAtInterval(
+    state, dt, speed, api, 0.4,
+    (rt) => rt.done,
+    doDiagnose,
+  ),
+  stepOnce: doDiagnose,
+  statusInfo: (state) => ({
+    name: '優先度付きキュー (Priority Queue)',
+    complexity: '取り出し: O(log N)',
+    operations: state.stageRuntime.operations,
+  }),
+};
+
+export const STAGES = [
+  STAGE_LINEAR, STAGE_BINARY, STAGE_BUBBLE, STAGE_QUICK,
+  STAGE_STACK, STAGE_QUEUE, STAGE_PQUEUE,
+];

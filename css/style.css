@@ -152,6 +152,37 @@ body {
 .binary-card.mid { border-color: var(--gold); background: #fff6da; transform: scale(1.08); }
 .binary-card.found { border-color: var(--ok); background: #dff3e2; color: var(--ok); }
 
+.stack-tower { display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
+.stack-room {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fffdf5;
+  font-weight: 700;
+}
+.stack-room.top { border-color: var(--gold); background: #fff6da; font-weight: 900; }
+.stack-room.treasure { border-color: var(--ok); background: #dff3e2; color: var(--ok); }
+.stack-room.deadend { border-color: var(--danger); opacity: 0.7; }
+
+.queue-track { display: flex; gap: 10px; flex-wrap: wrap; }
+.queue-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: #fffdf5;
+  min-width: 80px;
+}
+.queue-card .tag { font-size: 11px; color: var(--text-dim); font-weight: 700; }
+.queue-card .name { font-size: 15px; font-weight: 900; }
+.queue-card.front { border-color: var(--gold); background: #fff6da; transform: scale(1.08); }
+.queue-card.severity-3 { border-color: var(--danger); }
+.queue-card.severity-2 { border-color: var(--warn); }
+.queue-card.severity-1 { border-color: var(--border); }
+
 .bars {
   display: flex;
   align-items: flex-end;
