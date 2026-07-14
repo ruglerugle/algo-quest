@@ -11,6 +11,7 @@
   --ok: #2f7d43;
   --warn: #b8791f;
   --danger: #a3311b;
+  --info: #2f6fa3;
   --shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
   font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
 }
@@ -198,7 +199,10 @@ body {
   background: linear-gradient(180deg, #e7c873, var(--gold));
   border-radius: 3px 3px 0 0;
 }
-.bar.compare { background: linear-gradient(180deg, #ffe08a, var(--warn)); }
+.bar.compare {
+  background: linear-gradient(180deg, #8ec9ef, var(--info));
+  outline: 2px solid #dff0ff;
+}
 .bar.swap { background: linear-gradient(180deg, #ff9d8a, var(--danger)); }
 .bar.pivot { outline: 2px solid #fff; }
 .bar.sorted { background: linear-gradient(180deg, #9fe0ae, var(--ok)); }
@@ -223,7 +227,7 @@ body {
   display: inline-block;
   background: var(--gold);
 }
-.legend-swatch.compare { background: var(--warn); }
+.legend-swatch.compare { background: var(--info); }
 .legend-swatch.swap { background: var(--danger); }
 .legend-swatch.sorted { background: var(--ok); }
 .legend-swatch.pivot { background: var(--gold); outline: 2px solid #fff; }

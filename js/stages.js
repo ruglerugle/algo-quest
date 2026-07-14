@@ -464,7 +464,7 @@ function advanceQuickEvents(state, api, count) {
     } else if (ev.type === 'compare') {
       q.opsSoFar += 1;
       const lighter = q.arr[ev.i] < q.arr[ev.j];
-      q.highlight = { compare: [ev.i, ev.j], swap: [], pivot: q.highlight?.pivot ?? null };
+      q.highlight = { compare: [ev.i], swap: [], pivot: q.highlight?.pivot ?? null };
       q.liveDesc = `比較中の荷物は基準より${lighter ? '軽いので左側へ' : '重い(または同じ)のでそのまま'}`;
     } else if (ev.type === 'pivot') {
       q.highlight = { compare: [], swap: [], pivot: ev.index };
