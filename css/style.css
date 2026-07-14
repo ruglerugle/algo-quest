@@ -191,11 +191,18 @@ body {
 .cave-room.deadend rect { fill: #3d1712; stroke: var(--danger); }
 .cave-room.deadend text { fill: #ff9d8a; }
 
+.cave-room.candidate rect { fill: #1c3548; stroke: var(--info); }
+.cave-room.candidate text { fill: #8ec9ef; }
+
+.graph-node-sub { fill: #cbb98a; font-size: 12px; font-weight: 700; }
+.graph-edge-label { fill: #cbb98a; font-size: 11px; }
+
 .legend-swatch.cave-current { background: #4a3410; border: 2px solid var(--gold); }
 .legend-swatch.cave-onpath { background: #3d2a12; border: 2px solid var(--gold); }
 .legend-swatch.cave-treasure { background: #163d24; border: 2px solid var(--ok); }
 .legend-swatch.cave-deadend { background: #3d1712; border: 2px solid var(--danger); }
 .legend-swatch.cave-unvisited { background: #241608; border: 2px solid rgba(200, 168, 106, 0.3); }
+.legend-swatch.cave-candidate { background: #1c3548; border: 2px solid var(--info); }
 
 .queue-track { display: flex; gap: 10px; flex-wrap: wrap; }
 .queue-card {
