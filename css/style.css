@@ -188,27 +188,15 @@ body {
   align-items: flex-end;
   gap: 3px;
   height: 220px;
-  padding: 22px 8px 8px;
+  padding: 8px;
   background: #1c1208;
   border-radius: 10px;
 }
 .bar {
-  position: relative;
   flex: 1;
   min-width: 4px;
   background: linear-gradient(180deg, #e7c873, var(--gold));
   border-radius: 3px 3px 0 0;
-}
-.bar-value {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 2px;
-  font-size: 10px;
-  color: #fdf3da;
-  white-space: nowrap;
-  pointer-events: none;
 }
 .bar.compare { background: linear-gradient(180deg, #ffe08a, var(--warn)); }
 .bar.swap { background: linear-gradient(180deg, #ff9d8a, var(--danger)); }

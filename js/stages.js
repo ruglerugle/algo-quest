@@ -334,16 +334,11 @@ function renderBars(container, arr, opts = {}) {
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.height = `${(val / maxVal) * 100}%`;
-    bar.title = String(val);
     if (opts.compare?.includes(idx)) bar.classList.add('compare');
     if (opts.swap?.includes(idx)) bar.classList.add('swap');
     if (opts.pivot === idx) bar.classList.add('pivot');
     if (opts.sortedFrom !== undefined && idx >= opts.sortedFrom) bar.classList.add('sorted');
     if (opts.allSorted) bar.classList.add('sorted');
-    const label = document.createElement('span');
-    label.className = 'bar-value';
-    label.textContent = val;
-    bar.appendChild(label);
     wrap.appendChild(bar);
   });
   container.appendChild(wrap);
@@ -463,25 +458,22 @@ function advanceQuickEvents(state, api, count) {
     if (q.eventIdx >= q.events.length) { q.done = true; break; }
     const ev = q.events[q.eventIdx];
     if (ev.type === 'swap') {
-      const a = q.arr[ev.i];
-      const b = q.arr[ev.j];
       [q.arr[ev.i], q.arr[ev.j]] = [q.arr[ev.j], q.arr[ev.i]];
       q.highlight = { compare: [], swap: [ev.i, ev.j], pivot: q.highlight?.pivot ?? null };
-      q.liveDesc = `${a} と ${b} の位置を交換しました。`;
+      q.liveDesc = '2つの荷物の位置を交換しました。';
     } else if (ev.type === 'compare') {
       q.opsSoFar += 1;
+      const lighter = q.arr[ev.i] < q.arr[ev.j];
       q.highlight = { compare: [ev.i, ev.j], swap: [], pivot: q.highlight?.pivot ?? null };
-      const val = q.arr[ev.i];
-      const pivotVal = q.arr[ev.j];
-      q.liveDesc = `${val} を基準の${pivotVal}と比較中…${val < pivotVal ? '基準より小さいので左側へ' : '基準以上なのでそのまま'}`;
+      q.liveDesc = `比較中の荷物は基準より${lighter ? '軽いので左側へ' : '重い(または同じ)のでそのまま'}`;
     } else if (ev.type === 'pivot') {
       q.highlight = { compare: [], swap: [], pivot: ev.index };
-      q.liveDesc = `基準(ピボット)として ${q.arr[ev.index]} を選びました。`;
-      api.log(`基準(ピボット)として ${q.arr[ev.index]} を選びました。`);
+      q.liveDesc = '基準(ピボット)となる荷物を選びました。';
+      api.log('基準(ピボット)となる荷物を選びました。');
     } else if (ev.type === 'partitionDone') {
       q.highlight = { compare: [], swap: [], pivot: null };
-      q.liveDesc = `基準 ${q.arr[ev.index]} の位置が確定！ 左側は基準未満、右側は基準以上に分かれました。`;
-      api.log(`基準 ${q.arr[ev.index]} の位置が確定。左は基準未満・右は基準以上に分かれました。`, 'ok');
+      q.liveDesc = '基準の位置が確定！ 左側は基準より軽く、右側は基準より重い荷物に分かれました。';
+      api.log('基準の位置が確定。左は基準より軽い・右は基準より重い荷物に分かれました。', 'ok');
     } else if (ev.type === 'done') {
       q.done = true;
     }
