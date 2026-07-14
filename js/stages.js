@@ -286,13 +286,12 @@ const STAGE_BINARY = {
 };
 
 // ============================================================
-// ステージ2: ソート（バブル→クイック）
+// ステージ2: バブルソート
 // ============================================================
 
-const SORT_PHASES = [
-  { n: 10, mode: 'bubble' },
-  { n: 24, mode: 'bubble' },
-  { n: 30, mode: 'quick' },
+const BUBBLE_PHASES = [
+  { n: 10 },
+  { n: 24 },
 ];
 
 function randomValues(n) {
@@ -304,21 +303,10 @@ function randomValues(n) {
   return arr;
 }
 
-function buildSortPhase(phaseIdx) {
-  const phaseDef = SORT_PHASES[phaseIdx];
+function buildBubblePhase(phaseIdx) {
+  const phaseDef = BUBBLE_PHASES[phaseIdx];
   const values = randomValues(phaseDef.n);
-  if (phaseDef.mode === 'bubble') {
-    return { phaseIdx, phaseDef, bubble: createBubbleRuntime(values), lastCompare: null };
-  }
-  const { events, comparisons, swaps } = computeQuickSortEvents(values);
-  return {
-    phaseIdx,
-    phaseDef,
-    quick: {
-      arr: [...values], events, eventIdx: -1, comparisons, swaps,
-      done: false, highlight: null, opsSoFar: 0,
-    },
-  };
+  return { phaseIdx, phaseDef, bubble: createBubbleRuntime(values), lastCompare: null };
 }
 
 function renderBars(container, arr, opts = {}) {
@@ -355,25 +343,90 @@ function doBubbleStep(state, api) {
   api.render();
 }
 
-function advanceSortPhase(state, api) {
+function advanceBubblePhase(state, api) {
   const rt = state.stageRuntime;
   const nextIdx = rt.phaseIdx + 1;
-  if (nextIdx >= SORT_PHASES.length) {
+  if (nextIdx >= BUBBLE_PHASES.length) {
     api.completeStage();
-    api.log('見事、王国の物流に必要なアルゴリズムを一通り身につけました！', 'ok');
+    api.log('お疲れさまでした。荷物がもっと増えると腕がもちません…次はもっと速い「クイックソート」を身につけましょう。', 'ok');
     api.render();
     return;
   }
-  state.playing = false;
-  state.stageRuntime = buildSortPhase(nextIdx);
-  const next = SORT_PHASES[nextIdx];
-  if (next.mode === 'quick') {
-    api.log(`依頼：荷物${next.n}個を並べ替えてください。今度は「クイックソート」で自動的に高速処理します。`, 'ok');
-  } else {
-    api.log(`依頼：荷物${next.n}個をバブルソートで並べ替えてください。`);
-  }
+  state.stageRuntime = buildBubblePhase(nextIdx);
+  api.log(`依頼：荷物${BUBBLE_PHASES[nextIdx].n}個をバブルソートで並べ替えてください。`);
   api.refreshActions();
   api.render();
+}
+
+function renderBubbleVisual(container, state) {
+  const rt = state.stageRuntime;
+  const b = rt.bubble;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `荷物${b.arr.length}個 / 比較${b.comparisons}回・交換${b.swaps}回`;
+  container.appendChild(info);
+  const barsBox = document.createElement('div');
+  renderBars(barsBox, b.arr, {
+    compare: rt.lastCompare && !b.sorted ? [rt.lastCompare.i, rt.lastCompare.j] : [],
+    sortedFrom: b.arr.length - b.sortedTail,
+    allSorted: b.sorted,
+  });
+  container.appendChild(barsBox);
+}
+
+function renderBubbleActions(container, state, api) {
+  const rt = state.stageRuntime;
+  const b = rt.bubble;
+  const btn = document.createElement('button');
+  btn.textContent = '1手進める（隣同士を比較）';
+  btn.disabled = b.sorted;
+  btn.addEventListener('click', () => doBubbleStep(state, api));
+  container.appendChild(btn);
+  if (b.sorted) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    const isLast = rt.phaseIdx >= BUBBLE_PHASES.length - 1;
+    next.textContent = isLast ? 'ステージクリア！' : `次の依頼へ（荷物${BUBBLE_PHASES[rt.phaseIdx + 1].n}個）`;
+    next.addEventListener('click', () => advanceBubblePhase(state, api));
+    container.appendChild(next);
+  }
+}
+
+const STAGE_BUBBLE = {
+  navLabel: '③バブルソート',
+  title: '第3章 荷物の山 ― バブルソート ―',
+  missionText: 'バラバラに積まれた荷物を、隣同士の交換だけで並べ替えよう。',
+  dialogue: [
+    { who: '村長', text: '荷物が届いたのですが、大きさがバラバラで倉庫に収まりません。並べ替えてもらえますか？' },
+    { who: 'あなた', text: 'まずは隣同士を比べながら、地道に並べ替えてみます。' },
+  ],
+  build() {
+    return { runtime: buildBubblePhase(0) };
+  },
+  renderVisual: renderBubbleVisual,
+  renderActions: renderBubbleActions,
+  usesControlBar: () => false,
+  statusInfo: (state) => ({
+    name: 'バブルソート (Bubble Sort)',
+    complexity: 'O(N²)',
+    operations: state.stageRuntime.bubble.comparisons,
+  }),
+};
+
+// ============================================================
+// ステージ3: クイックソート
+// ============================================================
+
+function buildQuickRuntime() {
+  const values = randomValues(30);
+  const { events, comparisons, swaps } = computeQuickSortEvents(values);
+  return {
+    quick: {
+      arr: [...values], events, eventIdx: -1, comparisons, swaps,
+      done: false, highlight: null, opsSoFar: 0,
+    },
+  };
 }
 
 function advanceQuickEvents(state, api, count) {
@@ -406,101 +459,70 @@ function advanceQuickEvents(state, api, count) {
   api.render();
 }
 
-function tickSort(state, dt, speed, api) {
-  const rt = state.stageRuntime;
-  if (rt.phaseDef.mode !== 'quick' || rt.quick.done) return;
+function tickQuick(state, dt, speed, api) {
+  if (state.stageRuntime.quick.done) return;
   const stepsPerTick = Math.max(1, Math.round(2 * speed));
   advanceQuickEvents(state, api, stepsPerTick);
 }
 
-function renderSortVisual(container, state) {
-  const rt = state.stageRuntime;
+function renderQuickVisual(container, state) {
+  const q = state.stageRuntime.quick;
   container.innerHTML = '';
   const info = document.createElement('div');
   info.className = 'stage-info';
+  info.textContent = `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`;
+  container.appendChild(info);
+  const barsBox = document.createElement('div');
+  renderBars(barsBox, q.arr, {
+    compare: q.highlight?.compare ?? [],
+    swap: q.highlight?.swap ?? [],
+    pivot: q.highlight?.pivot ?? null,
+    allSorted: q.done,
+  });
+  container.appendChild(barsBox);
+}
 
-  if (rt.phaseDef.mode === 'bubble') {
-    const b = rt.bubble;
-    info.textContent = `荷物${b.arr.length}個 / 比較${b.comparisons}回・交換${b.swaps}回`;
-    container.appendChild(info);
-    const barsBox = document.createElement('div');
-    renderBars(barsBox, b.arr, {
-      compare: rt.lastCompare && !b.sorted ? [rt.lastCompare.i, rt.lastCompare.j] : [],
-      sortedFrom: b.arr.length - b.sortedTail,
-      allSorted: b.sorted,
+function renderQuickActions(container, state, api) {
+  const q = state.stageRuntime.quick;
+  if (q.done) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('見事、王国の物流に必要なアルゴリズムを一通り身につけました！', 'ok');
+      api.render();
     });
-    container.appendChild(barsBox);
+    container.appendChild(next);
   } else {
-    const q = rt.quick;
-    info.textContent = `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`;
-    container.appendChild(info);
-    const barsBox = document.createElement('div');
-    renderBars(barsBox, q.arr, {
-      compare: q.highlight?.compare ?? [],
-      swap: q.highlight?.swap ?? [],
-      pivot: q.highlight?.pivot ?? null,
-      allSorted: q.done,
-    });
-    container.appendChild(barsBox);
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = '下部の「再生」ボタンでクイックソートを自動実行できます。';
+    container.appendChild(hint);
   }
 }
 
-function renderSortActions(container, state, api) {
-  const rt = state.stageRuntime;
-  if (rt.phaseDef.mode === 'bubble') {
-    const b = rt.bubble;
-    const btn = document.createElement('button');
-    btn.textContent = '1手進める（隣同士を比較）';
-    btn.disabled = b.sorted;
-    btn.addEventListener('click', () => doBubbleStep(state, api));
-    container.appendChild(btn);
-    if (b.sorted) {
-      const next = document.createElement('button');
-      next.className = 'primary';
-      const isLast = rt.phaseIdx >= SORT_PHASES.length - 1;
-      next.textContent = isLast ? 'ステージクリア！' : `次の依頼へ（荷物${SORT_PHASES[rt.phaseIdx + 1].n}個）`;
-      next.addEventListener('click', () => advanceSortPhase(state, api));
-      container.appendChild(next);
-    }
-  } else {
-    if (rt.quick.done) {
-      const next = document.createElement('button');
-      next.className = 'primary';
-      next.textContent = 'ステージクリア！';
-      next.addEventListener('click', () => advanceSortPhase(state, api));
-      container.appendChild(next);
-    } else {
-      const hint = document.createElement('p');
-      hint.className = 'hint';
-      hint.textContent = '下部の「再生」ボタンでクイックソートを自動実行できます。';
-      container.appendChild(hint);
-    }
-  }
-}
-
-const STAGE_SORT = {
-  navLabel: '③ソート',
-  title: '第3章 荷物の山 ― ソート ―',
-  missionText: 'バラバラに積まれた荷物を、隣同士の交換だけで並べ替えよう。',
+const STAGE_QUICK = {
+  navLabel: '④クイックソート',
+  title: '第4章 荷物の山、再び ― クイックソート ―',
+  missionText: '今度はもっと多くの荷物を「クイックソート」で一気に並べ替えよう。',
   dialogue: [
-    { who: '村長', text: '荷物が届いたのですが、大きさがバラバラで倉庫に収まりません。並べ替えてもらえますか？' },
-    { who: 'あなた', text: 'まずは隣同士を比べながら、地道に並べ替えてみます。' },
+    { who: '村長', text: '今度はさらに大量の荷物です。バブルソートでは日が暮れてしまいますね…。' },
+    { who: 'あなた', text: 'では「クイックソート」を使いましょう。基準を決めて、一気に仕分けます。' },
   ],
   build() {
-    return { runtime: buildSortPhase(0) };
+    return { runtime: buildQuickRuntime() };
   },
-  renderVisual: renderSortVisual,
-  renderActions: renderSortActions,
-  usesControlBar: (state) => state.stageRuntime.phaseDef.mode === 'quick',
-  tick: tickSort,
+  renderVisual: renderQuickVisual,
+  renderActions: renderQuickActions,
+  usesControlBar: () => true,
+  tick: tickQuick,
   stepOnce: (state, api) => advanceQuickEvents(state, api, 1),
-  statusInfo: (state) => {
-    const rt = state.stageRuntime;
-    if (rt.phaseDef.mode === 'bubble') {
-      return { name: 'バブルソート (Bubble Sort)', complexity: 'O(N²)', operations: rt.bubble.comparisons };
-    }
-    return { name: 'クイックソート (Quick Sort)', complexity: '平均 O(N log N)', operations: rt.quick.comparisons };
-  },
+  statusInfo: (state) => ({
+    name: 'クイックソート (Quick Sort)',
+    complexity: '平均 O(N log N)',
+    operations: state.stageRuntime.quick.comparisons,
+  }),
 };
 
-export const STAGES = [STAGE_LINEAR, STAGE_BINARY, STAGE_SORT];
+export const STAGES = [STAGE_LINEAR, STAGE_BINARY, STAGE_BUBBLE, STAGE_QUICK];
