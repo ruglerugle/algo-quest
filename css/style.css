@@ -165,6 +165,38 @@ body {
 .stack-room.treasure { border-color: var(--ok); background: #dff3e2; color: var(--ok); }
 .stack-room.deadend { border-color: var(--danger); opacity: 0.7; }
 
+.cave-map { width: 100%; height: auto; background: #1c1208; border-radius: 10px; padding: 8px; }
+.cave-edge { stroke: rgba(200, 168, 106, 0.35); stroke-width: 3; }
+.cave-edge.on-path { stroke: var(--gold); stroke-width: 4; }
+
+.cave-room rect { fill: #2c1d0e; stroke: var(--border); stroke-width: 2; }
+.cave-room text { fill: #fdf3da; font-size: 16px; font-weight: 700; }
+
+.cave-room.unvisited rect { fill: #241608; stroke: rgba(200, 168, 106, 0.3); }
+.cave-room.unvisited text { fill: rgba(253, 243, 218, 0.35); }
+
+.cave-room.onpath rect { fill: #3d2a12; stroke: var(--gold); }
+
+.cave-room.current rect {
+  fill: #4a3410;
+  stroke: var(--gold);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgba(202, 162, 58, 0.8));
+}
+.cave-room.current text { fill: var(--gold); }
+
+.cave-room.treasure rect { fill: #163d24; stroke: var(--ok); }
+.cave-room.treasure text { fill: #8fe3a3; }
+
+.cave-room.deadend rect { fill: #3d1712; stroke: var(--danger); }
+.cave-room.deadend text { fill: #ff9d8a; }
+
+.legend-swatch.cave-current { background: #4a3410; border: 2px solid var(--gold); }
+.legend-swatch.cave-onpath { background: #3d2a12; border: 2px solid var(--gold); }
+.legend-swatch.cave-treasure { background: #163d24; border: 2px solid var(--ok); }
+.legend-swatch.cave-deadend { background: #3d1712; border: 2px solid var(--danger); }
+.legend-swatch.cave-unvisited { background: #241608; border: 2px solid rgba(200, 168, 106, 0.3); }
+
 .queue-track { display: flex; gap: 10px; flex-wrap: wrap; }
 .queue-card {
   display: flex;

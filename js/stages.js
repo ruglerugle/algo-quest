@@ -588,25 +588,52 @@ const CAVE_TREE = {
   id: 'entrance', label: '入口', children: [
     {
       id: 'hallA', label: '広間A', children: [
-        { id: 'deadend1', label: '行き止まり…宝はありません', children: [] },
+        { id: 'deadend1', label: '行き止まり…宝はありません', mapLabel: '行き止まり', children: [] },
         {
           id: 'roomB', label: '小部屋B', children: [
-            { id: 'deadend2', label: '行き止まり…宝はありません', children: [] },
+            { id: 'deadend2', label: '行き止まり…宝はありません', mapLabel: '行き止まり', children: [] },
           ],
         },
       ],
     },
     {
       id: 'hallC', label: '広間C', children: [
-        { id: 'deadend3', label: '行き止まり…宝はありません', children: [] },
+        { id: 'deadend3', label: '行き止まり…宝はありません', mapLabel: '行き止まり', children: [] },
         { id: 'treasure', label: '宝物庫', children: [], isTreasure: true },
       ],
     },
   ],
 };
 
+const ROOM_POS = {
+  entrance: { x: 360, y: 50 },
+  hallA: { x: 200, y: 170 },
+  hallC: { x: 520, y: 170 },
+  deadend1: { x: 90, y: 290 },
+  roomB: { x: 310, y: 290 },
+  deadend2: { x: 310, y: 410 },
+  deadend3: { x: 430, y: 290 },
+  treasure: { x: 630, y: 290 },
+};
+
+const ROOM_EDGES = [
+  ['entrance', 'hallA'], ['entrance', 'hallC'],
+  ['hallA', 'deadend1'], ['hallA', 'roomB'], ['roomB', 'deadend2'],
+  ['hallC', 'deadend3'], ['hallC', 'treasure'],
+];
+
+function flattenTree(node, map = {}) {
+  map[node.id] = node;
+  node.children.forEach((c) => flattenTree(c, map));
+  return map;
+}
+const ROOM_MAP = flattenTree(CAVE_TREE);
+
 function buildStackRuntime() {
-  return { stack: [CAVE_TREE], explored: {}, operations: 0, cleared: false };
+  return {
+    stack: [CAVE_TREE], explored: {}, visited: new Set(['entrance']),
+    operations: 0, cleared: false,
+  };
 }
 
 function doPush(state, api) {
@@ -615,6 +642,7 @@ function doPush(state, api) {
   const idx = rt.explored[current.id] || 0;
   const child = current.children[idx];
   rt.stack.push(child);
+  rt.visited.add(child.id);
   rt.operations += 1;
   api.log(`「${child.label}」へ進みました。(Push)`);
   if (child.isTreasure) {
@@ -672,6 +700,23 @@ function renderStackVisual(container, state) {
       : `現在地:「${current.label}」。これ以上は進めません…戻りましょう。`);
   container.appendChild(live);
 
+  const mapBox = document.createElement('div');
+  renderStackMap(mapBox, rt);
+  container.appendChild(mapBox);
+
+  renderBarLegend(container, [
+    { cls: 'cave-current', label: '現在地' },
+    { cls: 'cave-onpath', label: '通ってきた道' },
+    { cls: 'cave-treasure', label: '宝物庫' },
+    { cls: 'cave-deadend', label: '行き止まり' },
+    { cls: 'cave-unvisited', label: '未探索' },
+  ]);
+
+  const towerLabel = document.createElement('div');
+  towerLabel.className = 'stage-info';
+  towerLabel.textContent = '現在のスタック（下が入口・上が現在地）';
+  container.appendChild(towerLabel);
+
   const tower = document.createElement('div');
   tower.className = 'stack-tower';
   [...rt.stack].reverse().forEach((node, i) => {
@@ -684,6 +729,40 @@ function renderStackVisual(container, state) {
     tower.appendChild(box);
   });
   container.appendChild(tower);
+}
+
+function renderStackMap(container, rt) {
+  const currentId = rt.stack[rt.stack.length - 1].id;
+  const stackIds = new Set(rt.stack.map((n) => n.id));
+
+  const edgesSvg = ROOM_EDGES.map(([a, b]) => {
+    const pa = ROOM_POS[a];
+    const pb = ROOM_POS[b];
+    const onPath = stackIds.has(a) && stackIds.has(b);
+    return `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" class="cave-edge${onPath ? ' on-path' : ''}" />`;
+  }).join('');
+
+  const roomsSvg = Object.entries(ROOM_POS).map(([id, pos]) => {
+    const node = ROOM_MAP[id];
+    const visited = rt.visited.has(id);
+    const isCurrent = id === currentId;
+    const isDeadend = node.children.length === 0 && !node.isTreasure;
+    const cls = [
+      'cave-room',
+      !visited ? 'unvisited' : '',
+      visited && isCurrent ? 'current' : '',
+      visited && !isCurrent && stackIds.has(id) ? 'onpath' : '',
+      visited && node.isTreasure ? 'treasure' : '',
+      visited && isDeadend ? 'deadend' : '',
+    ].filter(Boolean).join(' ');
+    const label = node.mapLabel ?? node.label;
+    return `<g class="${cls}">
+      <rect x="${pos.x - 55}" y="${pos.y - 22}" width="110" height="44" rx="10"></rect>
+      <text x="${pos.x}" y="${pos.y + 5}" text-anchor="middle">${escapeHtml(label)}</text>
+    </g>`;
+  }).join('');
+
+  container.innerHTML = `<svg viewBox="0 0 720 450" class="cave-map">${edgesSvg}${roomsSvg}</svg>`;
 }
 
 function renderStackActions(container, state, api) {
