@@ -511,6 +511,8 @@ function renderQuickVisual(container, state) {
   live.textContent = q.liveDesc;
   container.appendChild(live);
 
+  renderQuickZoom(container, q);
+
   const barsBox = document.createElement('div');
   renderBars(barsBox, q.arr, {
     compare: q.highlight?.compare ?? [],
@@ -526,6 +528,34 @@ function renderQuickVisual(container, state) {
     { cls: 'swap', label: '交換' },
     { cls: 'sorted', label: '確定' },
   ]);
+}
+
+function renderQuickZoom(container, q) {
+  const zoom = document.createElement('div');
+  zoom.className = 'quick-zoom';
+  const addCard = (label, value, cls) => {
+    const card = document.createElement('div');
+    card.className = `zoom-card ${cls}`;
+    card.innerHTML = `<span class="tag">${escapeHtml(label)}</span><span class="value">${value}</span>`;
+    zoom.appendChild(card);
+  };
+
+  const h = q.highlight;
+  if (h?.swap?.length === 2) {
+    addCard('交換される値', q.arr[h.swap[0]], 'swap');
+    addCard('交換される値', q.arr[h.swap[1]], 'swap');
+  } else if (h?.compare?.length === 2) {
+    addCard('基準（ピボット）', q.arr[h.compare[1]], 'pivot');
+    addCard('比較中の値', q.arr[h.compare[0]], 'compare');
+  } else if (h?.pivot != null) {
+    addCard('基準（ピボット）', q.arr[h.pivot], 'pivot');
+  } else {
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = '「再生」または「1ステップ」を押すと、基準と比較対象がここに大きく表示されます。';
+    zoom.appendChild(hint);
+  }
+  container.appendChild(zoom);
 }
 
 function renderBarLegend(container, entries) {
