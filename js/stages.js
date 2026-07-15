@@ -1064,7 +1064,7 @@ const STAGE_PQUEUE = {
 // 共通: グラフ/マップ描画ヘルパー（DFS・BFS・ダイクストラで共用）
 // ============================================================
 
-function renderGraphSvg(container, { positions, edges, nodeClass, nodeLabel, nodeSubLabel, edgeClass, edgeLabel, edgeLabelT, viewBox }) {
+function renderGraphSvg(container, { positions, edges, nodeClass, nodeLabel, nodeSubLabel, edgeClass, edgeLabel, edgeLabelT, viewBox, onNodeClick }) {
   const edgesSvg = edges.map(({ from, to }) => {
     const pa = positions[from];
     const pb = positions[to];
@@ -1085,7 +1085,7 @@ function renderGraphSvg(container, { positions, edges, nodeClass, nodeLabel, nod
     const label = nodeLabel(id);
     const sub = nodeSubLabel ? nodeSubLabel(id) : '';
     const boxH = sub ? 54 : 44;
-    return `<g class="cave-room ${cls}">
+    return `<g class="cave-room ${cls}" data-id="${id}">
       <rect x="${pos.x - 58}" y="${pos.y - boxH / 2}" width="116" height="${boxH}" rx="10"></rect>
       <text x="${pos.x}" y="${pos.y + (sub ? -3 : 5)}" text-anchor="middle">${escapeHtml(label)}</text>
       ${sub ? `<text x="${pos.x}" y="${pos.y + 16}" text-anchor="middle" class="graph-node-sub">${escapeHtml(sub)}</text>` : ''}
@@ -1093,6 +1093,12 @@ function renderGraphSvg(container, { positions, edges, nodeClass, nodeLabel, nod
   }).join('');
 
   container.innerHTML = `<svg viewBox="${viewBox}" class="cave-map">${edgesSvg}${nodesSvg}</svg>`;
+
+  if (onNodeClick) {
+    container.querySelectorAll('.cave-room').forEach((g) => {
+      g.addEventListener('click', () => onNodeClick(g.dataset.id));
+    });
+  }
 }
 
 function flattenGraphTree(node, map = {}) {
@@ -1107,6 +1113,12 @@ function edgesFromTree(node, acc = []) {
     edgesFromTree(c, acc);
   });
   return acc;
+}
+
+function parentMapFromTree(node, parent = null, map = {}) {
+  if (parent) map[node.id] = parent;
+  node.children.forEach((c) => parentMapFromTree(c, node.id, map));
+  return map;
 }
 
 // ============================================================
@@ -1683,8 +1695,759 @@ const STAGE_DIJKSTRA = {
   }),
 };
 
+// ============================================================
+// ステージ10: 動的計画法
+// ============================================================
+
+const DP_PHASES = [
+  { mode: 'naive', target: 8 },
+  { mode: 'memo', target: 20 },
+];
+
+function buildDPStagePhase(phaseIdx) {
+  const def = DP_PHASES[phaseIdx];
+  return {
+    phaseIdx,
+    mode: def.mode,
+    target: def.target,
+    memo: {},
+    stack: [{ n: def.target, slot: null, leftDone: false, rightDone: false, leftVal: null, rightVal: null }],
+    calls: 1,
+    result: null,
+    cleared: false,
+  };
+}
+
+function dpResolveTop(state, api, value) {
+  const rt = state.stageRuntime;
+  const frame = rt.stack.pop();
+  if (rt.mode === 'memo') rt.memo[frame.n] = value;
+  if (rt.stack.length === 0) {
+    rt.result = value;
+    rt.cleared = true;
+    api.log(`ways(${rt.target}) = ${value}（呼び出し回数: ${rt.calls}回）`, 'ok');
+    api.setStatus(`完了：呼び出し回数 ${rt.calls}回`, 'ok');
+    state.playing = false;
+    api.refreshActions();
+  } else {
+    const parent = rt.stack[rt.stack.length - 1];
+    if (frame.slot === 'left') { parent.leftVal = value; parent.leftDone = true; } else { parent.rightVal = value; parent.rightDone = true; }
+  }
+  api.render();
+}
+
+function doDPStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) return;
+  const top = rt.stack[rt.stack.length - 1];
+  if (top.n <= 1) {
+    dpResolveTop(state, api, 1);
+    return;
+  }
+  if (!top.leftDone) {
+    const cached = rt.memo[top.n - 1];
+    if (cached !== undefined) {
+      top.leftVal = cached;
+      top.leftDone = true;
+      api.log(`ways(${top.n - 1}) はメモ化済み → ${cached}（計算せず再利用）`, 'ok');
+    } else {
+      rt.stack.push({ n: top.n - 1, slot: 'left', leftDone: false, rightDone: false, leftVal: null, rightVal: null });
+      rt.calls += 1;
+      api.log(`ways(${top.n - 1}) を呼び出します。`);
+    }
+  } else if (!top.rightDone) {
+    const cached = rt.memo[top.n - 2];
+    if (cached !== undefined) {
+      top.rightVal = cached;
+      top.rightDone = true;
+      api.log(`ways(${top.n - 2}) はメモ化済み → ${cached}（計算せず再利用）`, 'ok');
+    } else {
+      rt.stack.push({ n: top.n - 2, slot: 'right', leftDone: false, rightDone: false, leftVal: null, rightVal: null });
+      rt.calls += 1;
+      api.log(`ways(${top.n - 2}) を呼び出します。`);
+    }
+  } else {
+    dpResolveTop(state, api, top.leftVal + top.rightVal);
+    return;
+  }
+  api.render();
+}
+
+function advanceDPPhase(state, api) {
+  const rt = state.stageRuntime;
+  const nextIdx = rt.phaseIdx + 1;
+  if (nextIdx >= DP_PHASES.length) {
+    api.completeStage();
+    api.log(`メモ化のおかげで、ways(20)のような大きな計算もたった${rt.calls}回で終わりました。`, 'ok');
+    api.render();
+    return;
+  }
+  state.playing = false;
+  state.stageRuntime = buildDPStagePhase(nextIdx);
+  const next = DP_PHASES[nextIdx];
+  api.log(`依頼：今度は ways(${next.target}) を、計算結果を覚えながら(メモ化)計算してください。`, 'ok');
+  api.refreshActions();
+  api.render();
+}
+
+function renderDPVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `目標: ways(${rt.target}) / 呼び出し回数: ${rt.calls}回 / モード: ${rt.mode === 'memo' ? 'メモ化あり' : 'メモ化なし'}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  if (rt.cleared) {
+    live.textContent = `ways(${rt.target}) = ${rt.result} が確定しました！`;
+  } else {
+    const top = rt.stack[rt.stack.length - 1];
+    live.textContent = top.n <= 1
+      ? `ways(${top.n}) はベースケース（1通り）としてすぐ返せます。`
+      : (!top.leftDone ? `ways(${top.n}) を計算中…まず ways(${top.n - 1}) が必要です。`
+        : (!top.rightDone ? `次に ways(${top.n - 2}) が必要です。` : `ways(${top.n}) = ${top.leftVal} + ${top.rightVal} を計算します。`));
+  }
+  container.appendChild(live);
+
+  const tower = document.createElement('div');
+  tower.className = 'stack-tower';
+  [...rt.stack].reverse().forEach((frame, i) => {
+    const box = document.createElement('div');
+    box.className = 'stack-room';
+    if (i === 0) box.classList.add('top');
+    box.textContent = `ways(${frame.n})`;
+    tower.appendChild(box);
+  });
+  container.appendChild(tower);
+
+  if (rt.mode === 'memo') {
+    const memoKeys = Object.keys(rt.memo).map(Number).sort((a, b) => a - b);
+    if (memoKeys.length) {
+      renderQueueTrack(container, memoKeys, (k) => {
+        const card = document.createElement('div');
+        card.className = 'queue-card front';
+        card.innerHTML = `<span class="tag">ways(${k})</span><span class="name">${rt.memo[k]}</span>`;
+        return card;
+      });
+    }
+  }
+}
+
+function renderDPActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) {
+    const isLast = rt.phaseIdx >= DP_PHASES.length - 1;
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = isLast ? 'ステージクリア！' : `次の依頼へ（メモ化ありで ways(${DP_PHASES[rt.phaseIdx + 1].target})）`;
+    next.addEventListener('click', () => advanceDPPhase(state, api));
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '1手進める（計算する）';
+  btn.addEventListener('click', () => doDPStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_DP = {
+  navLabel: '⑪動的計画法',
+  title: '第11章 宝箱の階段 ― 動的計画法 ―',
+  missionText: '階段の上り方(1歩か2歩)が何通りあるか数えよう。同じ計算をやり直していないか確認してみよう。',
+  dialogue: [
+    { who: '王', text: '宝箱までの階段の上り方が何通りあるか知りたい。1歩か2歩ずつ進めるとして数えてくれ。' },
+    { who: 'あなた', text: '愚直に計算すると、同じ「残り◯段」の計算を何度も繰り返してしまいそうです。' },
+    { who: 'あなた', text: '一度計算した結果を覚えておけば(メモ化)、同じ計算をやり直さずに済みますね。' },
+  ],
+  build() {
+    return { runtime: buildDPStagePhase(0) };
+  },
+  renderVisual: renderDPVisual,
+  renderActions: renderDPActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.15, (rt) => rt.cleared, doDPStep),
+  stepOnce: doDPStep,
+  statusInfo: (state) => {
+    const rt = state.stageRuntime;
+    return rt.mode === 'memo'
+      ? { name: '動的計画法 (メモ化あり)', complexity: 'O(N)', operations: rt.calls }
+      : { name: '動的計画法 (メモ化なし)', complexity: 'O(2^N)', operations: rt.calls };
+  },
+};
+
+// ============================================================
+// ステージ11: 貪欲法
+// ============================================================
+
+const GREEDY_PHASES = [
+  { coins: [25, 10, 5, 1], amount: 63, label: '通常の硬貨' },
+  { coins: [4, 3, 1], amount: 6, label: '特殊な硬貨' },
+];
+
+function computeMinCoins(coins, amount) {
+  const dp = new Array(amount + 1).fill(Infinity);
+  dp[0] = 0;
+  for (let a = 1; a <= amount; a += 1) {
+    coins.forEach((c) => {
+      if (c <= a && dp[a - c] + 1 < dp[a]) dp[a] = dp[a - c] + 1;
+    });
+  }
+  return dp[amount];
+}
+
+function buildGreedyPhase(phaseIdx) {
+  const def = GREEDY_PHASES[phaseIdx];
+  return { phaseIdx, def, remaining: def.amount, picked: [], done: false, optimal: null };
+}
+
+function doGreedyStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.remaining <= 0) return;
+  const coin = rt.def.coins.find((c) => c <= rt.remaining);
+  rt.picked.push(coin);
+  rt.remaining -= coin;
+  api.log(`${coin}を選びました。残り${rt.remaining}。`);
+  if (rt.remaining === 0) {
+    rt.optimal = computeMinCoins(rt.def.coins, rt.def.amount);
+    rt.done = true;
+    if (rt.picked.length === rt.optimal) {
+      api.log(`貪欲法で${rt.picked.length}枚に。これは本当に最少の枚数と同じです！`, 'ok');
+      api.setStatus(`完了：${rt.picked.length}枚（最少と同じ）`, 'ok');
+    } else {
+      api.log(`貪欲法だと${rt.picked.length}枚。しかし本当の最少枚数は${rt.optimal}枚でした。Greedyが必ず最適とは限りません。`, 'err');
+      api.setStatus(`完了：${rt.picked.length}枚（最少は${rt.optimal}枚）`, 'err');
+    }
+    state.playing = false;
+    api.refreshActions();
+  }
+  api.render();
+}
+
+function advanceGreedyPhase(state, api) {
+  const rt = state.stageRuntime;
+  const nextIdx = rt.phaseIdx + 1;
+  if (nextIdx >= GREEDY_PHASES.length) {
+    api.completeStage();
+    api.log('その場その場で最善に見える手を選ぶのが貪欲法です。うまくいくこともあれば、いかないこともあります。', 'ok');
+    api.render();
+    return;
+  }
+  state.stageRuntime = buildGreedyPhase(nextIdx);
+  api.log(`依頼：今度は${GREEDY_PHASES[nextIdx].label}(${GREEDY_PHASES[nextIdx].coins.join(',')})で、${GREEDY_PHASES[nextIdx].amount}をお釣りとして渡してください。`);
+  api.refreshActions();
+  api.render();
+}
+
+function renderGreedyVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `${rt.def.label}(${rt.def.coins.join(', ')}) / 目標金額: ${rt.def.amount} / 残り: ${rt.remaining}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.done
+    ? (rt.picked.length === rt.optimal ? `完了！${rt.picked.length}枚で渡せました（最少枚数と同じ）。` : `完了！${rt.picked.length}枚で渡しましたが、本当は${rt.optimal}枚で済みました。`)
+    : `残り${rt.remaining}に対して、使える一番大きい硬貨は${rt.def.coins.find((c) => c <= rt.remaining)}です。`;
+  container.appendChild(live);
+
+  renderQueueTrack(container, rt.picked, (coin) => {
+    const card = document.createElement('div');
+    card.className = 'queue-card front';
+    card.innerHTML = `<span class="tag">硬貨</span><span class="name">${coin}</span>`;
+    return card;
+  });
+}
+
+function renderGreedyActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.done) {
+    const isLast = rt.phaseIdx >= GREEDY_PHASES.length - 1;
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = isLast ? 'ステージクリア！' : '次の依頼へ（特殊な硬貨で挑戦）';
+    next.addEventListener('click', () => advanceGreedyPhase(state, api));
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '一番大きい硬貨を選ぶ（Greedy）';
+  btn.addEventListener('click', () => doGreedyStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_GREEDY = {
+  navLabel: '⑫貪欲法',
+  title: '第12章 商人のお釣り ― 貪欲法 ―',
+  missionText: 'その場その場で一番良い選択（一番大きい硬貨）をする「貪欲法」で、お釣りの枚数を最小にしよう。',
+  dialogue: [
+    { who: '商人', text: 'お釣りをできるだけ少ない枚数の硬貨で渡したいのです。' },
+    { who: 'あなた', text: 'いつも使える中で一番大きい硬貨から選べば、うまくいきそうですね。' },
+  ],
+  build() {
+    return { runtime: buildGreedyPhase(0) };
+  },
+  renderVisual: renderGreedyVisual,
+  renderActions: renderGreedyActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.3, (rt) => rt.remaining <= 0, doGreedyStep),
+  stepOnce: doGreedyStep,
+  statusInfo: (state) => ({
+    name: '貪欲法 (Greedy)',
+    complexity: 'O(N)',
+    operations: state.stageRuntime.picked.length,
+  }),
+};
+
+// ============================================================
+// ステージ12: 再帰
+// ============================================================
+
+function buildRecursionRuntime() {
+  return {
+    phase: 'noBase',
+    depth: 0,
+    crashWarnDepth: 8,
+    baseDepth: 5,
+    crashed: false,
+    returning: false,
+    cleared: false,
+  };
+}
+
+function doRecursionStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.phase === 'noBase') {
+    if (rt.crashed) return;
+    rt.depth += 1;
+    if (rt.depth >= rt.crashWarnDepth) {
+      rt.crashed = true;
+      api.log(`鏡の中へ入りました。(深さ${rt.depth})`);
+      api.log('スタックオーバーフロー！止まる条件(ベースケース)がないと、再帰は無限に深くなってしまいます。', 'err');
+      api.setStatus('失敗：止まる条件がなく無限に呼び出され続けました', 'err');
+      state.playing = false;
+    } else {
+      api.log(`鏡の中へ入りました。(深さ${rt.depth})`);
+    }
+    api.refreshActions();
+    api.render();
+    return;
+  }
+  if (rt.cleared) return;
+  if (!rt.returning) {
+    rt.depth += 1;
+    if (rt.depth >= rt.baseDepth) {
+      rt.returning = true;
+      api.log(`鏡の一番奥(深さ${rt.depth})で小さな鍵を見つけました！止まる条件に達したので、ここから戻ります。`, 'ok');
+    } else {
+      api.log(`鏡の中へ入りました。(深さ${rt.depth})`);
+    }
+  } else {
+    rt.depth -= 1;
+    api.log(`鏡から戻りました。(深さ${rt.depth})`);
+    if (rt.depth === 0) {
+      rt.cleared = true;
+      api.setStatus(`完了：最大の深さ ${rt.baseDepth}`, 'ok');
+      state.playing = false;
+    }
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function advanceRecursionPhase(state, api) {
+  const rt = state.stageRuntime;
+  rt.phase = 'withBase';
+  rt.depth = 0;
+  rt.returning = false;
+  state.playing = false;
+  api.log('今度は「深さ5に達したら戻る」という止まる条件(ベースケース)を追加してみましょう。');
+  api.refreshActions();
+  api.render();
+}
+
+function renderRecursionVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `現在の深さ: ${rt.depth} / モード: ${rt.phase === 'noBase' ? '止まる条件なし' : '止まる条件あり'}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  if (rt.phase === 'noBase') {
+    live.textContent = rt.crashed
+      ? 'スタックオーバーフロー！止まる条件がないと無限に鏡へ入り続けてしまいます。'
+      : '「鏡に入る」を押すたびに、もう一段深い鏡の部屋に入ります。';
+  } else {
+    live.textContent = rt.cleared
+      ? '無事に元の部屋まで戻ってきました！'
+      : (rt.returning ? '鍵を手に、1段ずつ元の部屋へ戻っています。' : `深さ${rt.baseDepth}に達するまで鏡に入り続けます。`);
+  }
+  container.appendChild(live);
+
+  const tower = document.createElement('div');
+  tower.className = 'stack-tower';
+  for (let d = rt.depth; d >= 1; d -= 1) {
+    const box = document.createElement('div');
+    box.className = 'stack-room';
+    if (d === rt.depth) box.classList.add('top');
+    if (rt.phase === 'withBase' && d === rt.baseDepth) box.classList.add('treasure');
+    box.textContent = `鏡の部屋（深さ${d}）`;
+    tower.appendChild(box);
+  }
+  if (rt.depth === 0) {
+    const box = document.createElement('div');
+    box.className = 'stack-room top';
+    box.textContent = '元の部屋（深さ0）';
+    tower.appendChild(box);
+  }
+  container.appendChild(tower);
+}
+
+function renderRecursionActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.phase === 'noBase') {
+    if (rt.crashed) {
+      const next = document.createElement('button');
+      next.className = 'primary';
+      next.textContent = '止まる条件を追加する';
+      next.addEventListener('click', () => advanceRecursionPhase(state, api));
+      container.appendChild(next);
+    } else {
+      const btn = document.createElement('button');
+      btn.textContent = '鏡に入る（再帰呼び出し）';
+      btn.addEventListener('click', () => doRecursionStep(state, api));
+      container.appendChild(btn);
+    }
+    return;
+  }
+  if (rt.cleared) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('止まる条件(ベースケース)があるから、再帰は必ず終わって元に戻ってこられます。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = rt.returning ? '鏡から戻る' : '鏡に入る（再帰呼び出し）';
+  btn.addEventListener('click', () => doRecursionStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_RECURSION = {
+  navLabel: '⑬再帰',
+  title: '第13章 魔法の鏡の間 ― 再帰 ―',
+  missionText: '鏡の中にはまた同じ部屋がある。止まる条件(ベースケース)がないと、無限に続いてしまう。',
+  dialogue: [
+    { who: '魔法使い', text: 'この鏡に入ると、また同じ部屋に出る…かもしれない。気をつけてくれ。' },
+    { who: 'あなた', text: '入り続けるだけだと、いつまでも終わらなさそうです。' },
+  ],
+  build() {
+    return { runtime: buildRecursionRuntime() };
+  },
+  renderVisual: renderRecursionVisual,
+  renderActions: renderRecursionActions,
+  tick: (state, dt, speed, api) => tickAtInterval(
+    state, dt, speed, api, 0.3,
+    (rt) => (rt.phase === 'noBase' ? rt.crashed : rt.cleared),
+    doRecursionStep,
+  ),
+  stepOnce: doRecursionStep,
+  statusInfo: (state) => ({
+    name: '再帰 (Recursion)',
+    complexity: '呼び出しの深さ: O(depth)',
+    operations: state.stageRuntime.depth,
+  }),
+};
+
+// ============================================================
+// ステージ13: 木構造
+// ============================================================
+
+const FAMILY_TREE = {
+  id: 'king', label: '国王', children: [
+    {
+      id: 'prince1', label: '第一王子', children: [
+        { id: 'gc1', label: '孫1', children: [] },
+        { id: 'gc2', label: '孫2', children: [] },
+      ],
+    },
+    {
+      id: 'prince2', label: '第二王子', children: [
+        { id: 'gc3', label: '孫3', children: [] },
+        { id: 'gc4', label: '孫4', children: [] },
+      ],
+    },
+  ],
+};
+
+const FAMILY_MAP = flattenGraphTree(FAMILY_TREE);
+const FAMILY_EDGES = edgesFromTree(FAMILY_TREE);
+const FAMILY_PARENT = parentMapFromTree(FAMILY_TREE);
+const FAMILY_POS = {
+  king: { x: 300, y: 60 },
+  prince1: { x: 150, y: 180 },
+  prince2: { x: 450, y: 180 },
+  gc1: { x: 70, y: 300 },
+  gc2: { x: 230, y: 300 },
+  gc3: { x: 370, y: 300 },
+  gc4: { x: 530, y: 300 },
+};
+const FAMILY_EXPANDABLE_COUNT = Object.values(FAMILY_MAP).filter((n) => n.children.length > 0).length;
+
+function buildTreeRuntime() {
+  return { expanded: new Set(['king']), operations: 0, cleared: false };
+}
+
+function doTreeExpand(state, api, nodeId) {
+  const rt = state.stageRuntime;
+  const node = FAMILY_MAP[nodeId];
+  if (!node || node.children.length === 0 || rt.expanded.has(nodeId)) return;
+  rt.expanded.add(nodeId);
+  rt.operations += 1;
+  api.log(`「${node.label}」を展開しました。`);
+  if (rt.expanded.size >= FAMILY_EXPANDABLE_COUNT) {
+    rt.cleared = true;
+    api.log('家系図をすべて展開できました！', 'ok');
+    api.setStatus(`完了：展開回数 ${rt.operations}回`, 'ok');
+    state.playing = false;
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function doTreeStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) return;
+  const nextId = Object.keys(FAMILY_MAP).find((id) => {
+    const node = FAMILY_MAP[id];
+    if (node.children.length === 0 || rt.expanded.has(id)) return false;
+    return id === 'king' || rt.expanded.has(FAMILY_PARENT[id]);
+  });
+  if (nextId) doTreeExpand(state, api, nextId);
+}
+
+function renderTreeVisual(container, state, api) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `展開済み: ${rt.expanded.size}/${Object.keys(FAMILY_MAP).length} / 展開回数: ${rt.operations}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.cleared
+    ? '家系図をすべて展開できました！'
+    : '金色に光っているノードをクリックすると展開できます。';
+  container.appendChild(live);
+
+  const visiblePos = {};
+  Object.keys(FAMILY_POS).forEach((id) => {
+    if (id === 'king' || rt.expanded.has(FAMILY_PARENT[id])) visiblePos[id] = FAMILY_POS[id];
+  });
+  const visibleEdges = FAMILY_EDGES.filter((e) => visiblePos[e.from] && visiblePos[e.to]);
+
+  const mapBox = document.createElement('div');
+  renderGraphSvg(mapBox, {
+    positions: visiblePos,
+    edges: visibleEdges,
+    edgeClass: () => 'on-path',
+    nodeLabel: (id) => FAMILY_MAP[id].label,
+    nodeClass: (id) => {
+      const node = FAMILY_MAP[id];
+      const isExpanded = rt.expanded.has(id);
+      const isLeaf = node.children.length === 0;
+      if (isLeaf) return isExpanded ? 'treasure' : 'current';
+      return isExpanded ? 'onpath' : 'current clickable';
+    },
+    onNodeClick: (id) => doTreeExpand(state, api, id),
+    viewBox: '0 0 600 360',
+  });
+  container.appendChild(mapBox);
+
+  renderBarLegend(container, [
+    { cls: 'cave-current', label: 'クリックで展開' },
+    { cls: 'cave-onpath', label: '展開済み' },
+    { cls: 'cave-treasure', label: '末端（孫）' },
+  ]);
+}
+
+function renderTreeActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('親→子→孫と、木構造は上から下へたどっていくことで全体を調べられます。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const hint = document.createElement('p');
+  hint.className = 'hint';
+  hint.textContent = '地図の中のノードをクリックして展開してください。';
+  container.appendChild(hint);
+}
+
+const STAGE_TREE = {
+  navLabel: '⑭木構造',
+  title: '第14章 王家の家系図 ― 木構造 ―',
+  missionText: '国王から子、孫へとクリックして家系図をすべて展開しよう。',
+  dialogue: [
+    { who: '記録係', text: '王家の家系図です。まだ全ては開かれていません。' },
+    { who: 'あなた', text: '国王から順に、子・孫の代までクリックして見ていきましょう。' },
+  ],
+  build() {
+    return { runtime: buildTreeRuntime() };
+  },
+  renderVisual: renderTreeVisual,
+  renderActions: renderTreeActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.5, (rt) => rt.cleared, doTreeStep),
+  stepOnce: doTreeStep,
+  statusInfo: (state) => ({
+    name: '木構造 (Tree)',
+    complexity: '探索: O(N)',
+    operations: state.stageRuntime.operations,
+  }),
+};
+
+// ============================================================
+// ステージ14: ハッシュ
+// ============================================================
+
+const HASH_BUCKET_COUNT = 12;
+const HASH_TARGETS = ['竜の巻物', '古の呪文書', '黄金の羅針盤'];
+
+function hashOf(title) {
+  let sum = 0;
+  for (const ch of title) sum += ch.charCodeAt(0);
+  return sum % HASH_BUCKET_COUNT;
+}
+
+function buildHashRuntime() {
+  return { roundIdx: 0, phase: 'idle', bucket: null, operations: 0, cleared: false };
+}
+
+function doHashStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) return;
+  const target = HASH_TARGETS[rt.roundIdx];
+  if (rt.phase === 'idle') {
+    rt.bucket = hashOf(target);
+    rt.operations += 1;
+    rt.phase = 'revealed';
+    api.log(`hash(「${target}」) = 本棚${rt.bucket}番 と計算できました。`);
+  } else if (rt.phase === 'revealed') {
+    rt.operations += 1;
+    rt.phase = 'found';
+    api.log(`本棚${rt.bucket}番を確認…「${target}」を発見しました！(1回で到達)`, 'ok');
+    if (rt.roundIdx >= HASH_TARGETS.length - 1) {
+      rt.cleared = true;
+      api.setStatus(`完了：全${HASH_TARGETS.length}冊を毎回1〜2回で発見`, 'ok');
+      state.playing = false;
+    }
+  } else {
+    rt.roundIdx += 1;
+    rt.phase = 'idle';
+    rt.bucket = null;
+    api.log(`次の本「${HASH_TARGETS[rt.roundIdx]}」を探します。`);
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function renderHashVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const target = HASH_TARGETS[rt.roundIdx];
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `探している本: 「${target}」（${rt.roundIdx + 1}/${HASH_TARGETS.length}冊目） / 操作回数: ${rt.operations}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  if (rt.cleared) {
+    live.textContent = '100万冊の図書館でも、ハッシュならいつも一発で見つかりました！';
+  } else if (rt.phase === 'idle') {
+    live.textContent = `「${target}」のハッシュ値(本棚番号)を計算しましょう。`;
+  } else if (rt.phase === 'revealed') {
+    live.textContent = `本棚${rt.bucket}番だと分かりました。確認してみましょう。`;
+  } else {
+    live.textContent = `「${target}」を発見しました！`;
+  }
+  container.appendChild(live);
+
+  const shelves = Array.from({ length: HASH_BUCKET_COUNT }, (_, i) => i);
+  renderQueueTrack(container, shelves, (i) => {
+    const card = document.createElement('div');
+    card.className = 'queue-card';
+    if (rt.bucket === i) card.classList.add('front');
+    card.innerHTML = `<span class="tag">本棚</span><span class="name">${i}</span>`;
+    return card;
+  });
+}
+
+function renderHashActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('線形探索なら平均50万回、二分探索でも約20回かかるところ、ハッシュならたった1〜2回。これがハッシュの力です。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  if (rt.phase === 'idle') btn.textContent = 'ハッシュ値を計算する';
+  else if (rt.phase === 'revealed') btn.textContent = `本棚${rt.bucket}番を確認する（O(1)）`;
+  else btn.textContent = '次の本を探す';
+  btn.addEventListener('click', () => doHashStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_HASH = {
+  navLabel: '⑮ハッシュ',
+  title: '第15章 100万冊の図書館 ― ハッシュ ―',
+  missionText: '本のタイトルからハッシュ値を計算し、本棚番号を一発で求めよう。',
+  dialogue: [
+    { who: '司書', text: 'この図書館には100万冊もの本があります。探すのは大変そうです…' },
+    { who: 'あなた', text: 'いいえ、タイトルから計算した「ハッシュ値」を本棚番号にすれば、一発で見つかります。' },
+  ],
+  build() {
+    return { runtime: buildHashRuntime() };
+  },
+  renderVisual: renderHashVisual,
+  renderActions: renderHashActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.6, (rt) => rt.cleared, doHashStep),
+  stepOnce: doHashStep,
+  statusInfo: (state) => ({
+    name: 'ハッシュ (Hash)',
+    complexity: '平均 O(1)',
+    operations: state.stageRuntime.operations,
+  }),
+};
+
 export const STAGES = [
   STAGE_LINEAR, STAGE_BINARY, STAGE_BUBBLE, STAGE_QUICK,
   STAGE_STACK, STAGE_QUEUE, STAGE_PQUEUE,
   STAGE_DFS, STAGE_BFS, STAGE_DIJKSTRA,
+  STAGE_DP, STAGE_GREEDY, STAGE_RECURSION, STAGE_TREE, STAGE_HASH,
 ];
