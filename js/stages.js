@@ -333,7 +333,13 @@ function renderBars(container, arr, opts = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'bars';
   const maxVal = Math.max(...arr, 1);
+  const addBoundary = () => {
+    const divider = document.createElement('div');
+    divider.className = 'bar-boundary';
+    wrap.appendChild(divider);
+  };
   arr.forEach((val, idx) => {
+    if (opts.boundary === idx) addBoundary();
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.height = `${(val / maxVal) * 100}%`;
@@ -346,6 +352,7 @@ function renderBars(container, arr, opts = {}) {
     if (opts.inRange && (idx < opts.inRange.lo || idx > opts.inRange.hi)) bar.classList.add('out-of-range');
     wrap.appendChild(bar);
   });
+  if (opts.boundary === arr.length) addBoundary();
   container.appendChild(wrap);
 }
 
@@ -452,6 +459,7 @@ function buildQuickRuntime() {
       done: false, highlight: null, opsSoFar: 0,
       confirmed: new Set(),
       range: { lo: 0, hi: values.length - 1 },
+      boundary: null,
       liveDesc: '「再生」ボタンか「1ステップ」でクイックソートを開始します。',
     },
   };
@@ -475,14 +483,17 @@ function advanceQuickEvents(state, api, count) {
       const lighter = q.arr[ev.i] < q.arr[ev.j];
       q.highlight = { compare: [ev.i], swap: [], pivot: q.highlight?.pivot ?? null };
       q.liveDesc = `比較中の荷物は基準より${lighter ? '軽いので左側へ' : '重い(または同じ)のでそのまま'}`;
+      q.boundary = ev.boundary;
     } else if (ev.type === 'pivot') {
       q.highlight = { compare: [], swap: [], pivot: ev.index };
       q.liveDesc = '基準(ピボット)となる荷物を選びました。';
       api.log('基準(ピボット)となる荷物を選びました。');
+      q.boundary = ev.boundary;
     } else if (ev.type === 'partitionDone') {
       q.highlight = { compare: [], swap: [], pivot: null };
       q.liveDesc = '基準の位置が確定！ 左側は基準より軽く、右側は基準より重い荷物に分かれました。';
       api.log('基準の位置が確定。左は基準より軽い・右は基準より重い荷物に分かれました。', 'ok');
+      q.boundary = null;
     } else if (ev.type === 'confirmed') {
       q.confirmed.add(ev.index);
     } else if (ev.type === 'done') {
@@ -511,9 +522,10 @@ function renderQuickVisual(container, state) {
   const rangeSize = q.done ? 0 : q.range.hi - q.range.lo + 1;
   const info = document.createElement('div');
   info.className = 'stage-info';
+  const boundaryText = q.boundary != null ? ` / 軽いグループ: ${q.boundary - q.range.lo}個` : '';
   info.textContent = q.done
     ? `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`
-    : `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length} / 現在の範囲: ${q.range.lo + 1}〜${q.range.hi + 1}番目（${rangeSize}個）`;
+    : `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length} / 現在の範囲: ${q.range.lo + 1}〜${q.range.hi + 1}番目（${rangeSize}個）${boundaryText}`;
   container.appendChild(info);
 
   const live = document.createElement('div');
@@ -528,6 +540,7 @@ function renderQuickVisual(container, state) {
     pivot: q.highlight?.pivot ?? null,
     sortedIndices: q.confirmed,
     inRange: q.done ? null : q.range,
+    boundary: q.done ? null : q.boundary,
     allSorted: q.done,
   });
   container.appendChild(barsBox);
@@ -537,6 +550,7 @@ function renderQuickVisual(container, state) {
     { cls: 'compare', label: '比較中' },
     { cls: 'swap', label: '交換' },
     { cls: 'sorted', label: '確定' },
+    { cls: 'boundary', label: '｜軽いグループとの境目' },
   ]);
 }
 

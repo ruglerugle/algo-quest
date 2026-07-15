@@ -242,6 +242,15 @@ body {
 .bar.sorted { background: linear-gradient(180deg, #9fe0ae, var(--ok)); }
 .bar.out-of-range:not(.sorted) { opacity: 0.3; }
 
+.bar-boundary {
+  align-self: stretch;
+  width: 3px;
+  margin: 0 2px;
+  background: var(--gold);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(202, 162, 58, 0.9);
+}
+
 .live-desc {
   font-size: 14px;
   font-weight: 700;
@@ -266,6 +275,7 @@ body {
 .legend-swatch.swap { background: var(--danger); }
 .legend-swatch.sorted { background: var(--ok); }
 .legend-swatch.pivot { background: var(--gold); outline: 2px solid #fff; }
+.legend-swatch.boundary { width: 4px; background: var(--gold); box-shadow: 0 0 6px rgba(202, 162, 58, 0.9); }
 
 #stage-actions { display: flex; gap: 10px; flex-wrap: wrap; min-width: 0; }
 #stage-actions button, #control-bar button {
