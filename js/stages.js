@@ -478,6 +478,7 @@ function advanceQuickEvents(state, api, count) {
       [q.arr[ev.i], q.arr[ev.j]] = [q.arr[ev.j], q.arr[ev.i]];
       q.highlight = { compare: [], swap: [ev.i, ev.j], pivot: q.highlight?.pivot ?? null };
       q.liveDesc = '2つの荷物の位置を交換しました。';
+      if (ev.boundary !== undefined) q.boundary = ev.boundary;
     } else if (ev.type === 'compare') {
       q.opsSoFar += 1;
       const lighter = q.arr[ev.i] < q.arr[ev.j];
