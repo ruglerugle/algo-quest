@@ -99,9 +99,10 @@ export function bubbleStep(runtime) {
 /**
  * クイックソートを実行しながら操作イベントを記録する。
  * イベント種別: range(lo,hi)＝今処理中の部分配列 / pivot(pivotIndex,boundary) /
- * compare(i,j,boundary) / swap(i,j) / partitionDone(pivotFinalIndex) /
+ * compare(i,j) / swap(i,j) / boundary(index) / partitionDone(pivotFinalIndex) /
  * confirmed(index) ＝そのindexが最終位置に確定
- * boundary＝「基準より軽いグループ」と「それ以外」の境目のindex（[lo,boundary)が軽いグループ）
+ * boundary＝「基準より軽いグループ」と「それ以外」の境目のindex（[lo,boundary)が軽いグループ）。
+ * 対応するswap(あれば)より後に発行するため、表示とズレない。
  */
 export function computeQuickSortEvents(values) {
   const arr = [...values];
@@ -124,10 +125,11 @@ export function computeQuickSortEvents(values) {
     for (let j = lo; j < hi; j += 1) {
       comparisons += 1;
       const isLess = arr[j] < pivot;
-      events.push({ type: 'compare', i: j, j: pivotIndex, boundary: isLess ? i + 1 : i });
+      events.push({ type: 'compare', i: j, j: pivotIndex });
       if (isLess) {
         if (i !== j) swap(i, j);
         i += 1;
+        events.push({ type: 'boundary', index: i });
       }
     }
     if (i !== pivotIndex) swap(i, pivotIndex);

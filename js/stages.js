@@ -483,7 +483,8 @@ function advanceQuickEvents(state, api, count) {
       const lighter = q.arr[ev.i] < q.arr[ev.j];
       q.highlight = { compare: [ev.i], swap: [], pivot: q.highlight?.pivot ?? null };
       q.liveDesc = `比較中の荷物は基準より${lighter ? '軽いので左側へ' : '重い(または同じ)のでそのまま'}`;
-      q.boundary = ev.boundary;
+    } else if (ev.type === 'boundary') {
+      q.boundary = ev.index;
     } else if (ev.type === 'pivot') {
       q.highlight = { compare: [], swap: [], pivot: ev.index };
       q.liveDesc = '基準(ピボット)となる荷物を選びました。';
