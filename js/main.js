@@ -12,6 +12,11 @@ const gameState = {
   completed: false,
 };
 
+// 検証用: URLに ?all を付けると全ステージのロックを解除する（例: index.html?all）
+if (new URLSearchParams(location.search).has('all')) {
+  gameState.unlockedCount = STAGES.length;
+}
+
 const visualEl = document.getElementById('visual-stage');
 const actionsEl = document.getElementById('stage-actions');
 
