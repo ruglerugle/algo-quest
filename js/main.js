@@ -37,6 +37,7 @@ const API = {
     gameState.completed = true;
     gameState.unlockedCount = Math.max(gameState.unlockedCount, gameState.stageIndex + 2);
     ui.renderStageNav(STAGES, gameState, loadStage);
+    ui.renderBookRecommend(`「${gameState.stageDef.navLabel}」をクリアしたあなたへ`);
   },
 };
 
@@ -57,6 +58,7 @@ function loadStage(index) {
   ui.renderMissionBanner(def);
   ui.renderStageNav(STAGES, gameState, loadStage);
   ui.renderStageActions(actionsEl, def, gameState, API);
+  ui.renderBookRecommend('もっと深く学びたい方へ');
   render();
 }
 

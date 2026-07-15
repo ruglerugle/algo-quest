@@ -56,6 +56,20 @@ export function renderStatusBox(stageDef, state) {
   `;
 }
 
+const BOOK_RECOMMEND = {
+  title: '石畑清『アルゴリズムとデータ構造』(岩波講座 ソフトウェア科学)',
+  url: 'https://www.amazon.co.jp/dp/4000103431?tag=senjin-22',
+};
+
+export function renderBookRecommend(lead) {
+  const el = document.getElementById('book-recommend');
+  el.innerHTML = `
+    <p class="book-recommend-label">[PR]</p>
+    <p class="book-recommend-lead">${escapeHtml(lead)}</p>
+    <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
+  `;
+}
+
 export function renderCompareBox(html) {
   document.getElementById('compare-box').innerHTML = html ?? '';
 }
