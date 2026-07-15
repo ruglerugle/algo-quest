@@ -98,8 +98,9 @@ export function bubbleStep(runtime) {
 
 /**
  * クイックソートを実行しながら操作イベントを記録する。
- * イベント種別: pivot(pivotIndex) / compare(i,j) / swap(i,j) /
- * partitionDone(pivotFinalIndex) / confirmed(index) ＝そのindexが最終位置に確定
+ * イベント種別: range(lo,hi)＝今処理中の部分配列 / pivot(pivotIndex) /
+ * compare(i,j) / swap(i,j) / partitionDone(pivotFinalIndex) /
+ * confirmed(index) ＝そのindexが最終位置に確定
  */
 export function computeQuickSortEvents(values) {
   const arr = [...values];
@@ -114,6 +115,7 @@ export function computeQuickSortEvents(values) {
   }
 
   function partition(lo, hi) {
+    events.push({ type: 'range', lo, hi });
     const pivotIndex = hi;
     const pivot = arr[pivotIndex];
     events.push({ type: 'pivot', index: pivotIndex });
@@ -135,6 +137,7 @@ export function computeQuickSortEvents(values) {
   function quickSort(lo, hi) {
     if (lo > hi) return;
     if (lo === hi) {
+      events.push({ type: 'range', lo, hi });
       events.push({ type: 'confirmed', index: lo });
       return;
     }

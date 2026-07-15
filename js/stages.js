@@ -343,6 +343,7 @@ function renderBars(container, arr, opts = {}) {
     if (opts.sortedFrom !== undefined && idx >= opts.sortedFrom) bar.classList.add('sorted');
     if (opts.sortedIndices?.has(idx)) bar.classList.add('sorted');
     if (opts.allSorted) bar.classList.add('sorted');
+    if (opts.inRange && (idx < opts.inRange.lo || idx > opts.inRange.hi)) bar.classList.add('out-of-range');
     wrap.appendChild(bar);
   });
   container.appendChild(wrap);
@@ -450,6 +451,7 @@ function buildQuickRuntime() {
       arr: [...values], events, eventIdx: -1, comparisons, swaps,
       done: false, highlight: null, opsSoFar: 0,
       confirmed: new Set(),
+      range: { lo: 0, hi: values.length - 1 },
       liveDesc: '「再生」ボタンか「1ステップ」でクイックソートを開始します。',
     },
   };
@@ -462,7 +464,9 @@ function advanceQuickEvents(state, api, count) {
     q.eventIdx += 1;
     if (q.eventIdx >= q.events.length) { q.done = true; break; }
     const ev = q.events[q.eventIdx];
-    if (ev.type === 'swap') {
+    if (ev.type === 'range') {
+      q.range = { lo: ev.lo, hi: ev.hi };
+    } else if (ev.type === 'swap') {
       [q.arr[ev.i], q.arr[ev.j]] = [q.arr[ev.j], q.arr[ev.i]];
       q.highlight = { compare: [], swap: [ev.i, ev.j], pivot: q.highlight?.pivot ?? null };
       q.liveDesc = '2つの荷物の位置を交換しました。';
@@ -504,9 +508,12 @@ function tickQuick(state, dt, speed, api) {
 function renderQuickVisual(container, state) {
   const q = state.stageRuntime.quick;
   container.innerHTML = '';
+  const rangeSize = q.done ? 0 : q.range.hi - q.range.lo + 1;
   const info = document.createElement('div');
   info.className = 'stage-info';
-  info.textContent = `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`;
+  info.textContent = q.done
+    ? `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`
+    : `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length} / 現在の範囲: ${q.range.lo + 1}〜${q.range.hi + 1}番目（${rangeSize}個）`;
   container.appendChild(info);
 
   const live = document.createElement('div');
@@ -520,6 +527,7 @@ function renderQuickVisual(container, state) {
     swap: q.highlight?.swap ?? [],
     pivot: q.highlight?.pivot ?? null,
     sortedIndices: q.confirmed,
+    inRange: q.done ? null : q.range,
     allSorted: q.done,
   });
   container.appendChild(barsBox);

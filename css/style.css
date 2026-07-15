@@ -240,6 +240,7 @@ body {
 .bar.swap { background: linear-gradient(180deg, #ff9d8a, var(--danger)); }
 .bar.pivot { outline: 2px solid #fff; }
 .bar.sorted { background: linear-gradient(180deg, #9fe0ae, var(--ok)); }
+.bar.out-of-range:not(.sorted) { opacity: 0.3; }
 
 .live-desc {
   font-size: 14px;
