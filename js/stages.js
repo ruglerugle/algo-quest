@@ -1061,14 +1061,15 @@ const STAGE_PQUEUE = {
 // 共通: グラフ/マップ描画ヘルパー（DFS・BFS・ダイクストラで共用）
 // ============================================================
 
-function renderGraphSvg(container, { positions, edges, nodeClass, nodeLabel, nodeSubLabel, edgeClass, edgeLabel, viewBox }) {
+function renderGraphSvg(container, { positions, edges, nodeClass, nodeLabel, nodeSubLabel, edgeClass, edgeLabel, edgeLabelT, viewBox }) {
   const edgesSvg = edges.map(({ from, to }) => {
     const pa = positions[from];
     const pb = positions[to];
     const cls = edgeClass ? edgeClass(from, to) : '';
     const label = edgeLabel ? edgeLabel(from, to) : '';
-    const mx = (pa.x + pb.x) / 2;
-    const my = (pa.y + pb.y) / 2;
+    const t = edgeLabelT ? edgeLabelT(from, to) : 0.5;
+    const mx = pa.x + (pb.x - pa.x) * t;
+    const my = pa.y + (pb.y - pa.y) * t;
     const labelSvg = label
       ? `<text x="${mx}" y="${my - 6}" text-anchor="middle" class="graph-edge-label">${escapeHtml(label)}</text>`
       : '';
@@ -1483,17 +1484,17 @@ const KINGDOM_NODES = {
 
 const KINGDOM_EDGES = [
   { from: 'capital', to: 'forest', weight: 5, roadLabel: '森' },
-  { from: 'capital', to: 'mountain', weight: 25, roadLabel: '山' },
+  { from: 'capital', to: 'mountain', weight: 25, roadLabel: '山', labelT: 0.2 },
   { from: 'capital', to: 'harbor', weight: 12, roadLabel: '港街道' },
   { from: 'forest', to: 'mountain', weight: 3, roadLabel: '街道' },
-  { from: 'forest', to: 'lake', weight: 4, roadLabel: '森' },
+  { from: 'forest', to: 'lake', weight: 4, roadLabel: '森', labelT: 0.8 },
   { from: 'mountain', to: 'pass', weight: 6, roadLabel: '街道' },
   { from: 'lake', to: 'pass', weight: 6, roadLabel: '街道' },
-  { from: 'lake', to: 'valley', weight: 9, roadLabel: '森' },
+  { from: 'lake', to: 'valley', weight: 9, roadLabel: '森', labelT: 0.2 },
   { from: 'pass', to: 'goal', weight: 8, roadLabel: '街道' },
   { from: 'harbor', to: 'valley', weight: 3, roadLabel: '港街道' },
   { from: 'valley', to: 'goal', weight: 10, roadLabel: '谷道' },
-  { from: 'harbor', to: 'goal', weight: 30, roadLabel: '海路（近道に見える一直線）' },
+  { from: 'harbor', to: 'goal', weight: 30, roadLabel: '海路（近道に見える一直線）', labelT: 0.15 },
   { from: 'mountain', to: 'goal', weight: 15, roadLabel: '険しい山道' },
 ];
 
@@ -1582,6 +1583,7 @@ function renderDijkstraVisual(container, state) {
       const e = KINGDOM_EDGES.find((x) => x.from === from && x.to === to);
       return e ? `${e.roadLabel} ${e.weight}分` : '';
     },
+    edgeLabelT: (from, to) => findKingdomEdge(from, to)?.labelT ?? 0.5,
     edgeClass: (from, to) => (rt.settled.has(from) && rt.prev[to] === from ? 'on-path' : ''),
     nodeLabel: (id) => KINGDOM_NODES[id].label,
     nodeSubLabel: (id) => (rt.dist[id] === Infinity ? '∞' : `${rt.dist[id]}分`),
