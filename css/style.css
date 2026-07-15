@@ -153,6 +153,7 @@ body {
 }
 .binary-card .tag { font-size: 11px; color: var(--text-dim); font-weight: 700; }
 .binary-card .name { font-size: 16px; font-weight: 900; }
+.binary-card .num { font-size: 10px; color: var(--text-dim); font-weight: 700; }
 .binary-card.lo { border-color: #7d97c9; }
 .binary-card.hi { border-color: #c97d7d; }
 .binary-card.mid { border-color: var(--gold); background: #fff6da; transform: scale(1.08); }

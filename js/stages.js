@@ -33,7 +33,7 @@ const LINEAR_PHASES = [
 
 function buildLinearPhase(phaseIdx) {
   const phaseDef = LINEAR_PHASES[phaseIdx];
-  const target = '亜瑠碁リズム';
+  const target = 'アル・ゴリズム';
   const villagers = generateVillagers(phaseDef.n, { target });
   return {
     phaseIdx,
@@ -169,9 +169,9 @@ function renderLinearActions(container, state, api) {
 const STAGE_LINEAR = {
   navLabel: '①線形探索',
   title: '第1章 名簿の村 ― 線形探索 ―',
-  missionText: '亜瑠碁リズムさんを名簿の先頭から1人ずつ確認して見つけ出そう。',
+  missionText: 'アル・ゴリズムさんを名簿の先頭から1人ずつ確認して見つけ出そう。',
   dialogue: [
-    { who: '村長', text: '物流エンジニアさん、村人の亜瑠碁リズムさんに荷物を届けてほしいのです。名簿から探してもらえますか？' },
+    { who: '村長', text: '物流エンジニアさん、村人のアル・ゴリズムさんに荷物を届けてほしいのです。名簿から探してもらえますか？' },
     { who: 'あなた', text: 'わかりました。1人ずつ確認していきますね。' },
   ],
   build() {
@@ -193,7 +193,7 @@ const STAGE_LINEAR = {
 // ============================================================
 
 function buildBinaryRuntime() {
-  const target = '亜瑠碁リズム';
+  const target = 'アル・ゴリズム';
   const villagers = generateVillagers(1000, { target, sorted: true });
   return {
     target,
@@ -242,7 +242,7 @@ function renderBinaryVisual(container, state) {
     if (idx < 0 || idx >= rt.villagers.length) return;
     const card = document.createElement('div');
     card.className = `binary-card ${cls}`;
-    card.innerHTML = `<span class="tag">${label}</span><span class="name">${escapeHtml(rt.villagers[idx].name)}</span>`;
+    card.innerHTML = `<span class="tag">${label}</span><span class="name">${escapeHtml(rt.villagers[idx].name)}</span><span class="num">名簿${(idx + 1).toLocaleString()}番</span>`;
     track.appendChild(card);
   };
 
@@ -281,9 +281,9 @@ function renderBinaryActions(container, state, api) {
 const STAGE_BINARY = {
   navLabel: '②二分探索',
   title: '第2章 五十音の名簿 ― 二分探索 ―',
-  missionText: '名簿は五十音順に並んでいます。中央から確認し、範囲を半分ずつ絞り込んで亜瑠碁リズムさんを見つけよう。',
+  missionText: '名簿は五十音順に並んでいます。中央から確認し、範囲を半分ずつ絞り込んでアル・ゴリズムさんを見つけよう。',
   dialogue: [
-    { who: '村長', text: '今度は亜瑠碁リズムさんへ荷物です。実は名簿を五十音順に並べ直しておきました。' },
+    { who: '村長', text: '今度はアル・ゴリズムさんへ荷物です。実は名簿を五十音順に並べ直しておきました。' },
     { who: 'あなた', text: '並んでいるなら…端から探さなくても、真ん中から確認すればよさそうですね。' },
   ],
   build() {
