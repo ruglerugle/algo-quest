@@ -1985,95 +1985,141 @@ const STAGE_GREEDY = {
 };
 
 // ============================================================
-// ステージ12: 再帰
+// 共通: クイズ表示ヘルパー（再帰の各ステージで共用）
 // ============================================================
 
-function buildRecursionRuntime() {
+function renderQuizActions(container, quiz, onAnswer) {
+  const q = document.createElement('p');
+  q.className = 'hint';
+  q.textContent = quiz.question;
+  container.appendChild(q);
+  quiz.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => onAnswer(i));
+    container.appendChild(btn);
+  });
+}
+
+function resolveQuiz(api, quiz, optionIndex) {
+  const chosen = quiz.options[optionIndex];
+  if (chosen.correct) {
+    api.log(`正解！ ${chosen.label} です。`, 'ok');
+  } else {
+    const correctLabel = quiz.options.find((o) => o.correct).label;
+    api.log(`不正解…正しくは ${correctLabel} でした。`, 'err');
+  }
+}
+
+// ============================================================
+// ステージ12: 入れ子の塔（再帰①）
+// ============================================================
+
+function buildTowerRuntime() {
   return {
-    phase: 'noBase',
+    rooms: ['大部屋', '中部屋', '小部屋'],
     depth: 0,
-    crashWarnDepth: 8,
-    baseDepth: 5,
-    crashed: false,
-    returning: false,
-    value: null,
+    mode: 'entering',
+    treasureTotal: 0,
+    collectedAt: {},
+    pendingQuiz: null,
     cleared: false,
   };
 }
 
-function doRecursionStep(state, api) {
+function doTowerStep(state, api) {
   const rt = state.stageRuntime;
-  if (rt.phase === 'noBase') {
-    if (rt.crashed) return;
+  if (rt.cleared || rt.pendingQuiz) return;
+  const { rooms } = rt;
+  if (rt.mode === 'entering') {
     rt.depth += 1;
-    api.log(`鏡の中へ入りました。(深さ${rt.depth}) まだ奥に鏡が続いています…`);
-    if (rt.depth >= rt.crashWarnDepth) {
-      rt.crashed = true;
-      api.log('スタックオーバーフロー！止まる条件(ベースケース)がないと鏡は無限に続き、答えが返ってきません。', 'err');
-      api.setStatus('失敗：止まる条件がなく無限に呼び出され続けました', 'err');
-      state.playing = false;
-    }
-    api.refreshActions();
-    api.render();
-    return;
-  }
-  if (rt.cleared) return;
-  if (!rt.returning) {
-    rt.depth += 1;
-    if (rt.depth >= rt.baseDepth) {
-      rt.returning = true;
-      rt.value = 1;
-      api.log(`鏡の一番奥(深さ${rt.depth})で本物の宝石を見つけました！これが止まる条件(ベースケース)＝宝石1個です。`, 'ok');
-    } else {
-      api.log(`鏡の中へ入りました。(深さ${rt.depth}) まだ奥に鏡が続いています…`);
+    const roomName = rooms[rt.depth - 1];
+    api.log(`「${roomName}」に入りました。`);
+    if (rt.depth >= rooms.length) {
+      api.log(`「${roomName}」の中にはもう扉がありません。`);
+      rt.mode = 'returning';
+      rt.treasureTotal += 1;
+      rt.collectedAt[rt.depth] = true;
+      api.log(`「${roomName}」の宝を取りました！`, 'ok');
+      rt.pendingQuiz = {
+        question: '次に宝を取るのはどの部屋？',
+        options: [
+          { label: rooms[rt.depth - 2], correct: true },
+          { label: '塔の外', correct: false },
+          { label: roomName, correct: false },
+        ],
+      };
     }
   } else {
-    rt.value *= 2;
+    const roomName = rooms[rt.depth - 1];
     rt.depth -= 1;
-    api.log(`鏡${rt.depth + 1}枚目を抜けると、映る宝石の数が2倍の${rt.value}個になりました。`);
     if (rt.depth === 0) {
       rt.cleared = true;
-      api.log(`外に出ると、合計${rt.value}個の宝石が見えました！`, 'ok');
-      api.setStatus(`完了：最終的に${rt.value}個`, 'ok');
+      api.log('塔の外に出ました。すべての宝を手に入れました！', 'ok');
+      api.setStatus(`完了：宝${rt.treasureTotal}個`, 'ok');
       state.playing = false;
+      api.refreshActions();
+      api.render();
+      return;
+    }
+    const parentRoom = rooms[rt.depth - 1];
+    api.log(`「${parentRoom}」に戻りました。`);
+    if (!rt.collectedAt[rt.depth]) {
+      rt.pendingQuiz = {
+        question: `「${parentRoom}」の宝箱を開けるのはいつ？`,
+        options: [
+          { label: `「${parentRoom}」に入った直後`, correct: false },
+          { label: `「${roomName}」を攻略した後`, correct: true },
+          { label: '塔を出た後', correct: false },
+        ],
+        onResolved: () => {
+          rt.treasureTotal += 1;
+          rt.collectedAt[rt.depth] = true;
+          api.log(`「${parentRoom}」の宝を取りました！`, 'ok');
+        },
+      };
     }
   }
   api.refreshActions();
   api.render();
 }
 
-function advanceRecursionPhase(state, api) {
+function answerTowerQuiz(state, api, optionIndex) {
   const rt = state.stageRuntime;
-  rt.phase = 'withBase';
-  rt.depth = 0;
-  rt.returning = false;
-  rt.value = null;
-  state.playing = false;
-  api.log('今度は「深さ5(本物の宝石)に達したら戻る」という止まる条件(ベースケース)を追加してみましょう。');
+  const quiz = rt.pendingQuiz;
+  resolveQuiz(api, quiz, optionIndex);
+  rt.pendingQuiz = null;
+  if (quiz.onResolved) quiz.onResolved();
   api.refreshActions();
   api.render();
 }
 
-function renderRecursionVisual(container, state) {
+function doTowerAutoStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.pendingQuiz) {
+    const correctIdx = rt.pendingQuiz.options.findIndex((o) => o.correct);
+    answerTowerQuiz(state, api, correctIdx);
+    return;
+  }
+  doTowerStep(state, api);
+}
+
+function renderTowerVisual(container, state) {
   const rt = state.stageRuntime;
   container.innerHTML = '';
   const info = document.createElement('div');
   info.className = 'stage-info';
-  info.textContent = `現在の深さ: ${rt.depth} / モード: ${rt.phase === 'noBase' ? '止まる条件なし' : '止まる条件あり'}`;
+  info.textContent = `現在の深さ: ${rt.depth} / 集めた宝: ${rt.treasureTotal}個`;
   container.appendChild(info);
 
   const live = document.createElement('div');
   live.className = 'live-desc';
-  if (rt.phase === 'noBase') {
-    live.textContent = rt.crashed
-      ? 'スタックオーバーフロー！止まる条件がないと、答えが返ってこないまま無限に鏡へ入り続けてしまいます。'
-      : '「鏡に入る」を押すたびに、もう一段深い鏡の部屋に入ります。';
-  } else if (rt.cleared) {
-    live.textContent = `無事に戻ってきて、合計${rt.value}個の宝石が見えました！`;
-  } else if (!rt.returning) {
-    live.textContent = `鏡は奥に映るものを2倍にして見せます。深さ${rt.baseDepth}(本物の宝石)に達するまで入り続けます。`;
+  if (rt.cleared) live.textContent = `塔の外に出て、全ての宝(${rt.treasureTotal}個)を手に入れました！`;
+  else if (rt.pendingQuiz) live.textContent = 'クイズに答えてください。';
+  else if (rt.mode === 'entering') {
+    live.textContent = rt.depth === 0 ? '塔の最初の部屋に入りましょう。' : `「${rt.rooms[rt.depth - 1]}」の奥に部屋があるか確認しましょう。`;
   } else {
-    live.textContent = `宝石${rt.value}個を手に、1段戻るごとに数を2倍にしています。`;
+    live.textContent = `「${rt.rooms[rt.depth - 1]}」から元の部屋へ戻ります。`;
   }
   container.appendChild(live);
 
@@ -2083,35 +2129,22 @@ function renderRecursionVisual(container, state) {
     const box = document.createElement('div');
     box.className = 'stack-room';
     if (d === rt.depth) box.classList.add('top');
-    if (rt.phase === 'withBase' && d === rt.baseDepth) box.classList.add('treasure');
-    box.textContent = `鏡の部屋（深さ${d}）`;
+    if (rt.collectedAt[d]) box.classList.add('treasure');
+    box.textContent = `${rt.rooms[d - 1]}を攻略中${rt.collectedAt[d] ? '（宝を獲得済み）' : ''}`;
     tower.appendChild(box);
   }
   const ground = document.createElement('div');
   ground.className = 'stack-room';
   if (rt.depth === 0) ground.classList.add('top');
-  ground.textContent = rt.phase === 'withBase' && rt.value !== null && rt.depth === 0
-    ? `外の部屋（宝石 ${rt.value}個）`
-    : '外の部屋（深さ0）';
+  ground.textContent = rt.cleared ? `塔の外（宝${rt.treasureTotal}個）` : '塔の外';
   tower.appendChild(ground);
   container.appendChild(tower);
 }
 
-function renderRecursionActions(container, state, api) {
+function renderTowerActions(container, state, api) {
   const rt = state.stageRuntime;
-  if (rt.phase === 'noBase') {
-    if (rt.crashed) {
-      const next = document.createElement('button');
-      next.className = 'primary';
-      next.textContent = '止まる条件を追加する';
-      next.addEventListener('click', () => advanceRecursionPhase(state, api));
-      container.appendChild(next);
-    } else {
-      const btn = document.createElement('button');
-      btn.textContent = '鏡に入る（再帰呼び出し）';
-      btn.addEventListener('click', () => doRecursionStep(state, api));
-      container.appendChild(btn);
-    }
+  if (rt.pendingQuiz) {
+    renderQuizActions(container, rt.pendingQuiz, (i) => answerTowerQuiz(state, api, i));
     return;
   }
   if (rt.cleared) {
@@ -2120,47 +2153,499 @@ function renderRecursionActions(container, state, api) {
     next.textContent = 'ステージクリア！';
     next.addEventListener('click', () => {
       api.completeStage();
-      api.log('止まる条件(ベースケース)があるから、再帰は必ず終わり、答えを組み立てながら戻ってこられます。', 'ok');
+      api.log('小さい部屋の攻略を先に任せて、戻ってきたら自分の仕事(宝を取る)をする…これが再帰です。', 'ok');
       api.render();
     });
     container.appendChild(next);
     return;
   }
   const btn = document.createElement('button');
-  btn.textContent = rt.returning ? '鏡から戻る（宝石の数を2倍にする）' : '鏡に入る（再帰呼び出し）';
-  btn.addEventListener('click', () => doRecursionStep(state, api));
+  btn.textContent = rt.mode === 'entering' ? '奥の部屋へ入る' : '元の部屋へ戻る';
+  btn.addEventListener('click', () => doTowerStep(state, api));
   container.appendChild(btn);
 }
 
-const STAGE_RECURSION = {
-  navLabel: '⑬再帰',
-  title: '第13章 魔法の鏡の間 ― 再帰 ―',
-  missionText: '鏡の一番奥にある本物の宝石を見つけたら、1段戻るごとに見える数が2倍になる。止まる条件(ベースケース)がないと、答えは永遠に返ってこない。',
+const STAGE_TOWER = {
+  navLabel: '⑬再帰(入れ子の塔)',
+  title: '第13章 入れ子の塔 ― 再帰① ―',
+  missionText: '大部屋の中に中部屋、その中に小部屋がある。奥まで攻略したら、宝を取りながら順番に戻ってこよう。',
   dialogue: [
-    { who: '魔法使い', text: 'この鏡の一番奥には本物の宝石が1つだけある。手前の鏡は、奥に映るものを2倍にして見せるんだ。' },
-    { who: 'あなた', text: 'ということは、奥から戻ってくるたびに数を2倍にしていけば、最後に見える数が分かりますね。' },
-    { who: 'あなた', text: 'でも「これが本物だ」と止まる条件がないと、いつまでも奥を覗き続けて答えが出せなさそうです。' },
+    { who: '塔の番人', text: 'この塔は、部屋の中にまた同じ構造の部屋がある不思議な造りをしている。' },
+    { who: 'あなた', text: '奥の部屋を先に片付けてから、手前の部屋の宝を取ればいいんですね。' },
   ],
   build() {
-    return { runtime: buildRecursionRuntime() };
+    return { runtime: buildTowerRuntime() };
   },
-  renderVisual: renderRecursionVisual,
-  renderActions: renderRecursionActions,
-  tick: (state, dt, speed, api) => tickAtInterval(
-    state, dt, speed, api, 0.3,
-    (rt) => (rt.phase === 'noBase' ? rt.crashed : rt.cleared),
-    doRecursionStep,
-  ),
-  stepOnce: doRecursionStep,
+  renderVisual: renderTowerVisual,
+  renderActions: renderTowerActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.6, (rt) => rt.cleared, doTowerAutoStep),
+  stepOnce: doTowerAutoStep,
   statusInfo: (state) => ({
     name: '再帰 (Recursion)',
     complexity: '呼び出しの深さ: O(depth)',
+    operations: state.stageRuntime.treasureTotal,
+  }),
+};
+
+// ============================================================
+// ステージ13: 無限の塔（再帰②）
+// ============================================================
+
+function buildInfiniteRuntime() {
+  return { depth: 0, crashWarnDepth: 8, crashed: false, cleared: false };
+}
+
+function doInfiniteStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.crashed) return;
+  rt.depth += 1;
+  api.log(`扉を探して部屋に入りました。(深さ${rt.depth})`);
+  if (rt.depth >= rt.crashWarnDepth) {
+    rt.crashed = true;
+    rt.cleared = true;
+    api.log('スタックオーバーフロー！ 勇者は帰り道を覚えきれなくなった！', 'err');
+    api.setStatus('終了条件(ベースケース)がありませんでした', 'err');
+    state.playing = false;
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function renderInfiniteVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `現在の深さ: ${rt.depth}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.crashed
+    ? 'スタックオーバーフロー！ 終了条件(ベースケース)がないと、部屋への呼び出しは永遠に終わりません。'
+    : 'この部屋にも、次の部屋への扉がある…終わりはあるのでしょうか？';
+  container.appendChild(live);
+
+  const tower = document.createElement('div');
+  tower.className = 'stack-tower';
+  for (let d = rt.depth; d >= 1; d -= 1) {
+    const box = document.createElement('div');
+    box.className = 'stack-room';
+    if (d === rt.depth) box.classList.add(rt.crashed ? 'deadend' : 'top');
+    box.textContent = `名もなき部屋（深さ${d}）`;
+    tower.appendChild(box);
+  }
+  if (rt.depth === 0) {
+    const box = document.createElement('div');
+    box.className = 'stack-room top';
+    box.textContent = '塔の入口（深さ0）';
+    tower.appendChild(box);
+  }
+  container.appendChild(tower);
+}
+
+function renderInfiniteActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.crashed) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('終了条件(ベースケース)を決めておかないと、再帰は必ずこうなります。次のステージでは枝分かれする再帰を見てみましょう。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '扉を探して次の部屋へ入る';
+  btn.addEventListener('click', () => doInfiniteStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_INFINITE = {
+  navLabel: '⑭再帰(無限の塔)',
+  title: '第14章 無限の塔 ― 再帰② ―',
+  missionText: '終了条件(ベースケース)がないと、再帰はどうなってしまうのか体験しよう。',
+  dialogue: [
+    { who: '勇者', text: 'この塔には終わりがないという噂だ…' },
+    { who: 'あなた', text: '終了条件を決めずに部屋へ入り続けたら、一体どうなるのでしょう。' },
+  ],
+  build() {
+    return { runtime: buildInfiniteRuntime() };
+  },
+  renderVisual: renderInfiniteVisual,
+  renderActions: renderInfiniteActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.15, (rt) => rt.crashed, doInfiniteStep),
+  stepOnce: doInfiniteStep,
+  statusInfo: (state) => ({
+    name: '再帰 (Recursion)',
+    complexity: '止まる条件なし → O(∞)',
     operations: state.stageRuntime.depth,
   }),
 };
 
 // ============================================================
-// ステージ13: 木構造
+// ステージ14: 枝分かれの森（再帰③）
+// ============================================================
+
+const FOREST_TREE = {
+  id: 'trunk', label: '幹', children: [
+    {
+      id: 'a', label: '枝A', children: [
+        { id: 'c', label: '枝C', children: [] },
+        { id: 'd', label: '枝D', children: [] },
+      ],
+    },
+    {
+      id: 'b', label: '枝B', children: [
+        { id: 'e', label: '枝E', children: [] },
+      ],
+    },
+  ],
+};
+
+const FOREST_MAP = flattenGraphTree(FOREST_TREE);
+const FOREST_EDGES = edgesFromTree(FOREST_TREE);
+const FOREST_POS = {
+  trunk: { x: 300, y: 60 },
+  a: { x: 150, y: 180 },
+  b: { x: 450, y: 180 },
+  c: { x: 80, y: 300 },
+  d: { x: 230, y: 300 },
+  e: { x: 450, y: 300 },
+};
+
+function buildForestRuntime() {
+  return {
+    stack: [{ id: 'trunk', childIdx: 0, sum: 1 }],
+    visited: new Set(['trunk']),
+    total: null,
+    pendingQuiz: null,
+    cleared: false,
+  };
+}
+
+function doForestStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared || rt.pendingQuiz) return;
+  const top = rt.stack[rt.stack.length - 1];
+  const node = FOREST_MAP[top.id];
+  if (top.childIdx < node.children.length) {
+    const child = node.children[top.childIdx];
+    top.childIdx += 1;
+    rt.stack.push({ id: child.id, childIdx: 0, sum: 1 });
+    rt.visited.add(child.id);
+    api.log(`「${node.label}」から「${child.label}」へ進みます。`);
+    if (node.id === 'trunk' && top.childIdx === 1) {
+      rt.pendingQuiz = {
+        question: '次にどの枝を数え終える？',
+        options: [
+          { label: '枝A', correct: true },
+          { label: '枝B', correct: false },
+          { label: '枝Aと枝Bを同時に', correct: false },
+        ],
+      };
+    }
+  } else {
+    rt.stack.pop();
+    api.log(`「${node.label}」以下の枝は合計${top.sum}本です。`, 'ok');
+    if (rt.stack.length === 0) {
+      rt.total = top.sum;
+      rt.cleared = true;
+      api.setStatus(`完了：枝の総数 ${rt.total}本`, 'ok');
+      state.playing = false;
+    } else {
+      const parent = rt.stack[rt.stack.length - 1];
+      parent.sum += top.sum;
+    }
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function answerForestQuiz(state, api, optionIndex) {
+  const rt = state.stageRuntime;
+  resolveQuiz(api, rt.pendingQuiz, optionIndex);
+  rt.pendingQuiz = null;
+  api.refreshActions();
+  api.render();
+}
+
+function doForestAutoStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.pendingQuiz) {
+    const correctIdx = rt.pendingQuiz.options.findIndex((o) => o.correct);
+    answerForestQuiz(state, api, correctIdx);
+    return;
+  }
+  doForestStep(state, api);
+}
+
+function renderForestVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = rt.cleared ? `枝の総数: ${rt.total}本` : `今たどっている深さ: ${rt.stack.length}`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  if (rt.cleared) {
+    live.textContent = `全ての枝を数え終えました！合計${rt.total}本です。`;
+  } else if (rt.pendingQuiz) {
+    live.textContent = 'クイズに答えてください。';
+  } else {
+    const top = rt.stack[rt.stack.length - 1];
+    const node = FOREST_MAP[top.id];
+    live.textContent = top.childIdx < node.children.length
+      ? `「${node.label}」の子の枝を確認します。`
+      : `「${node.label}」の子はすべて数え終わりました。自分の分(1本)と合わせて親へ戻ります。`;
+  }
+  container.appendChild(live);
+
+  const currentId = rt.stack.length ? rt.stack[rt.stack.length - 1].id : null;
+  const mapBox = document.createElement('div');
+  renderGraphSvg(mapBox, {
+    positions: FOREST_POS,
+    edges: FOREST_EDGES,
+    edgeClass: (from, to) => (rt.visited.has(from) && rt.visited.has(to) ? 'on-path' : ''),
+    nodeLabel: (id) => FOREST_MAP[id].label,
+    nodeClass: (id) => {
+      if (id === currentId) return 'current';
+      if (rt.visited.has(id)) return 'onpath';
+      return 'unvisited';
+    },
+    viewBox: '0 0 600 360',
+  });
+  container.appendChild(mapBox);
+
+  renderBarLegend(container, [
+    { cls: 'cave-current', label: '今いる枝' },
+    { cls: 'cave-onpath', label: '数え終えた枝' },
+    { cls: 'cave-unvisited', label: 'まだの枝' },
+  ]);
+}
+
+function renderForestActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.pendingQuiz) {
+    renderQuizActions(container, rt.pendingQuiz, (i) => answerForestQuiz(state, api, i));
+    return;
+  }
+  if (rt.cleared) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('1つの枝から2つの子の枝を呼び出すこともある…それでも「先に子を数え終えてから自分の分を足す」というルールは同じです。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '次の枝へ進む／数え終えて戻る';
+  btn.addEventListener('click', () => doForestStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_FOREST = {
+  navLabel: '⑮再帰(枝分かれの森)',
+  title: '第15章 枝分かれの森 ― 再帰③ ―',
+  missionText: '妖精が木の枝をたどって、枝の本数を数えよう。1つの部屋から2つの小部屋を呼び出すこともある。',
+  dialogue: [
+    { who: '妖精', text: 'この森の枝、ぜんぶで何本あるか数えてほしいの。' },
+    { who: 'あなた', text: '幹から枝A、枝Aからさらに枝C・枝D…数える相手が2つに分かれることもあるんですね。' },
+  ],
+  build() {
+    return { runtime: buildForestRuntime() };
+  },
+  renderVisual: renderForestVisual,
+  renderActions: renderForestActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.5, (rt) => rt.cleared, doForestAutoStep),
+  stepOnce: doForestAutoStep,
+  statusInfo: (state) => ({
+    name: '再帰 (Recursion)',
+    complexity: '呼び出し回数: O(N)',
+    operations: state.stageRuntime.visited.size,
+  }),
+};
+
+// ============================================================
+// ステージ15: 階段迷宮（再帰④）
+// ============================================================
+
+const STAIR_MAZE_TREE = {
+  id: 'n4', label: '残り4段', value: 4, children: [
+    {
+      id: 'n3a', label: '残り3段', value: 3, children: [
+        {
+          id: 'n2a', label: '残り2段', value: 2, children: [
+            { id: 'n1a', label: '残り1段', value: 1, children: [] },
+            { id: 'n0a', label: '残り0段', value: 0, children: [] },
+          ],
+        },
+        { id: 'n1b', label: '残り1段', value: 1, children: [] },
+      ],
+    },
+    {
+      id: 'n2b', label: '残り2段', value: 2, children: [
+        { id: 'n1c', label: '残り1段', value: 1, children: [] },
+        { id: 'n0b', label: '残り0段', value: 0, children: [] },
+      ],
+    },
+  ],
+};
+
+const STAIR_MAZE_MAP = flattenGraphTree(STAIR_MAZE_TREE);
+const STAIR_MAZE_EDGES = edgesFromTree(STAIR_MAZE_TREE);
+const STAIR_MAZE_POS = {
+  n4: { x: 380, y: 50 },
+  n3a: { x: 230, y: 150 },
+  n2b: { x: 530, y: 150 },
+  n2a: { x: 160, y: 250 },
+  n1b: { x: 300, y: 250 },
+  n1c: { x: 460, y: 250 },
+  n0b: { x: 600, y: 250 },
+  n1a: { x: 110, y: 350 },
+  n0a: { x: 210, y: 350 },
+};
+
+function buildStairMazeRuntime() {
+  return {
+    frames: [{ id: 'n4', childIdx: 0, revealed: false }],
+    visited: [],
+    seenValues: {},
+    duplicateCount: 0,
+    cleared: false,
+  };
+}
+
+function doStairMazeStep(state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) return;
+  const top = rt.frames[rt.frames.length - 1];
+  const node = STAIR_MAZE_MAP[top.id];
+  if (!top.revealed) {
+    top.revealed = true;
+    rt.visited.push(top.id);
+    const seenBefore = rt.seenValues[node.value];
+    if (seenBefore) {
+      rt.duplicateCount += 1;
+      rt.seenValues[node.value] += 1;
+      api.log(`「${node.label}」…これはもう${seenBefore}回計算しましたね！同じ部分問題です。`, 'err');
+    } else {
+      rt.seenValues[node.value] = 1;
+      api.log(`「${node.label}」を初めて計算します。`);
+    }
+    api.render();
+    return;
+  }
+  if (top.childIdx < node.children.length) {
+    const child = node.children[top.childIdx];
+    top.childIdx += 1;
+    rt.frames.push({ id: child.id, childIdx: 0, revealed: false });
+  } else {
+    rt.frames.pop();
+    if (rt.frames.length === 0) {
+      rt.cleared = true;
+      api.setStatus(`完了：同じ部分問題を${rt.duplicateCount}回計算し直しました`, 'ok');
+      state.playing = false;
+    }
+  }
+  api.refreshActions();
+  api.render();
+}
+
+function renderStairMazeVisual(container, state) {
+  const rt = state.stageRuntime;
+  container.innerHTML = '';
+  const info = document.createElement('div');
+  info.className = 'stage-info';
+  info.textContent = `計算した回数: ${rt.visited.length}回 / 同じ問題をやり直した回数: ${rt.duplicateCount}回`;
+  container.appendChild(info);
+
+  const live = document.createElement('div');
+  live.className = 'live-desc';
+  live.textContent = rt.cleared
+    ? `気づきましたか？同じ部屋(部分問題)を${rt.duplicateCount}回も攻略し直していました。`
+    : '「残りN段」を1つずつ計算していきます。同じ部屋が出てきたら要注意です。';
+  container.appendChild(live);
+
+  const currentId = rt.frames.length ? rt.frames[rt.frames.length - 1].id : null;
+  const mapBox = document.createElement('div');
+  renderGraphSvg(mapBox, {
+    positions: STAIR_MAZE_POS,
+    edges: STAIR_MAZE_EDGES,
+    edgeClass: (from, to) => (rt.visited.includes(from) && rt.visited.includes(to) ? 'on-path' : ''),
+    nodeLabel: (id) => STAIR_MAZE_MAP[id].label,
+    nodeClass: (id) => {
+      const node = STAIR_MAZE_MAP[id];
+      const visitedCount = rt.visited.filter((v) => STAIR_MAZE_MAP[v].value === node.value).length;
+      if (id === currentId) return 'current';
+      if (!rt.visited.includes(id)) return 'unvisited';
+      return visitedCount > 1 ? 'deadend' : 'onpath';
+    },
+    viewBox: '0 0 720 400',
+  });
+  container.appendChild(mapBox);
+
+  renderBarLegend(container, [
+    { cls: 'cave-current', label: '今計算中' },
+    { cls: 'cave-onpath', label: '初めて計算した問題' },
+    { cls: 'cave-deadend', label: '2回目以降(同じ問題)' },
+    { cls: 'cave-unvisited', label: 'まだ計算していない' },
+  ]);
+}
+
+function renderStairMazeActions(container, state, api) {
+  const rt = state.stageRuntime;
+  if (rt.cleared) {
+    const next = document.createElement('button');
+    next.className = 'primary';
+    next.textContent = 'ステージクリア！';
+    next.addEventListener('click', () => {
+      api.completeStage();
+      api.log('同じ部分問題を何度も計算しているのがわかりましたね。一度計算した答えを覚えておく「メモ化」を、動的計画法の章で学びましょう。', 'ok');
+      api.render();
+    });
+    container.appendChild(next);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.textContent = '1手進める';
+  btn.addEventListener('click', () => doStairMazeStep(state, api));
+  container.appendChild(btn);
+}
+
+const STAGE_STAIR_MAZE = {
+  navLabel: '⑯再帰(階段迷宮)',
+  title: '第16章 階段迷宮 ― 再帰④ ―',
+  missionText: '階段の上り方を1歩・2歩の再帰で数えると、同じ「残りN段」を何度も計算していないか確認しよう。',
+  dialogue: [
+    { who: '旅の学者', text: '4段の階段の上り方を、1歩か2歩で数えてみよう。' },
+    { who: 'あなた', text: '「残り4段」は「残り3段」と「残り2段」に分かれて…あれ、この部屋、さっきも攻略しませんでしたか？' },
+  ],
+  build() {
+    return { runtime: buildStairMazeRuntime() };
+  },
+  renderVisual: renderStairMazeVisual,
+  renderActions: renderStairMazeActions,
+  tick: (state, dt, speed, api) => tickAtInterval(state, dt, speed, api, 0.4, (rt) => rt.cleared, doStairMazeStep),
+  stepOnce: doStairMazeStep,
+  statusInfo: (state) => ({
+    name: '再帰 (Recursion)',
+    complexity: '重複あり → 動的計画法へ',
+    operations: state.stageRuntime.visited.length,
+  }),
+};
+
+// ============================================================
+// ステージ16: 木構造
 // ============================================================
 
 const FAMILY_TREE = {
@@ -2293,8 +2778,8 @@ function renderTreeActions(container, state, api) {
 }
 
 const STAGE_TREE = {
-  navLabel: '⑭木構造',
-  title: '第14章 王家の家系図 ― 木構造 ―',
+  navLabel: '⑰木構造',
+  title: '第17章 王家の家系図 ― 木構造 ―',
   missionText: '国王から子、孫へとクリックして家系図をすべて展開しよう。',
   dialogue: [
     { who: '記録係', text: '王家の家系図です。まだ全ては開かれていません。' },
@@ -2414,8 +2899,8 @@ function renderHashActions(container, state, api) {
 }
 
 const STAGE_HASH = {
-  navLabel: '⑮ハッシュ',
-  title: '第15章 100万冊の図書館 ― ハッシュ ―',
+  navLabel: '⑱ハッシュ',
+  title: '第18章 100万冊の図書館 ― ハッシュ ―',
   missionText: '本のタイトルからハッシュ値を計算し、本棚番号を一発で求めよう。',
   dialogue: [
     { who: '司書', text: 'この図書館には100万冊もの本があります。探すのは大変そうです…' },
@@ -2439,5 +2924,7 @@ export const STAGES = [
   STAGE_LINEAR, STAGE_BINARY, STAGE_BUBBLE, STAGE_QUICK,
   STAGE_STACK, STAGE_QUEUE, STAGE_PQUEUE,
   STAGE_DFS, STAGE_BFS, STAGE_DIJKSTRA,
-  STAGE_DP, STAGE_GREEDY, STAGE_RECURSION, STAGE_TREE, STAGE_HASH,
+  STAGE_DP, STAGE_GREEDY,
+  STAGE_TOWER, STAGE_INFINITE, STAGE_FOREST, STAGE_STAIR_MAZE,
+  STAGE_TREE, STAGE_HASH,
 ];
