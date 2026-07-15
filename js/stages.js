@@ -1864,7 +1864,7 @@ const STAGE_DP = {
 // ============================================================
 
 const GREEDY_PHASES = [
-  { coins: [25, 10, 5, 1], amount: 63, label: '通常の硬貨' },
+  { coins: [50, 10, 5, 1], amount: 63, label: '通常の硬貨' },
   { coins: [4, 3, 1], amount: 6, label: '特殊な硬貨' },
 ];
 
