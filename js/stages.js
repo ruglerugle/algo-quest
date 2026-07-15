@@ -1474,6 +1474,8 @@ const KINGDOM_NODES = {
   capital: { label: '王都' },
   forest: { label: '森の村' },
   mountain: { label: '山の村' },
+  lake: { label: '湖畔の町' },
+  pass: { label: '峠' },
   goal: { label: '隣国', isGoal: true },
 };
 
@@ -1481,15 +1483,21 @@ const KINGDOM_EDGES = [
   { from: 'capital', to: 'forest', weight: 5, roadLabel: '森' },
   { from: 'capital', to: 'mountain', weight: 20, roadLabel: '山' },
   { from: 'forest', to: 'mountain', weight: 2, roadLabel: '街道' },
+  { from: 'forest', to: 'lake', weight: 6, roadLabel: '森' },
+  { from: 'mountain', to: 'pass', weight: 4, roadLabel: '街道' },
+  { from: 'lake', to: 'pass', weight: 3, roadLabel: '街道' },
+  { from: 'lake', to: 'goal', weight: 15, roadLabel: '森' },
+  { from: 'pass', to: 'goal', weight: 3, roadLabel: '街道' },
   { from: 'mountain', to: 'goal', weight: 2, roadLabel: '街道' },
-  { from: 'forest', to: 'goal', weight: 25, roadLabel: '険しい山道' },
 ];
 
 const KINGDOM_POS = {
-  capital: { x: 90, y: 200 },
-  forest: { x: 280, y: 90 },
-  mountain: { x: 280, y: 310 },
-  goal: { x: 470, y: 200 },
+  capital: { x: 70, y: 220 },
+  forest: { x: 230, y: 100 },
+  mountain: { x: 230, y: 320 },
+  lake: { x: 410, y: 100 },
+  pass: { x: 410, y: 320 },
+  goal: { x: 580, y: 210 },
 };
 
 function kingdomNeighbors(id) {
@@ -1579,7 +1587,7 @@ function renderDijkstraVisual(container, state) {
         settled && !node.isGoal ? 'onpath' : '',
       ].filter(Boolean).join(' ');
     },
-    viewBox: '0 0 560 400',
+    viewBox: '0 0 660 400',
   });
   container.appendChild(mapBox);
 
