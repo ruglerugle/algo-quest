@@ -1501,7 +1501,7 @@ const KINGDOM_POS = {
   capital: { x: 60, y: 220 },
   forest: { x: 220, y: 100 },
   mountain: { x: 400, y: 60 },
-  lake: { x: 220, y: 340 },
+  lake: { x: 220, y: 240 },
   pass: { x: 400, y: 220 },
   harbor: { x: 60, y: 380 },
   valley: { x: 560, y: 340 },
