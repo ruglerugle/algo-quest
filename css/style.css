@@ -101,7 +101,7 @@ body {
 
 #visual-wrap, #visual-stage, #side-panel { min-width: 0; }
 
-.stage-info { font-size: 13px; color: var(--text-dim); font-weight: 700; }
+.stage-info { font-size: 13px; color: var(--text-dim); font-weight: 700; line-height: 1.4; min-height: 2.8em; }
 
 .villager-grid {
   display: grid;
