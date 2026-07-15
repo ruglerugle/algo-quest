@@ -1484,13 +1484,13 @@ const KINGDOM_NODES = {
 
 const KINGDOM_EDGES = [
   { from: 'capital', to: 'forest', weight: 5, roadLabel: '森' },
-  { from: 'capital', to: 'mountain', weight: 25, roadLabel: '山', labelT: 0.2 },
+  { from: 'capital', to: 'mountain', weight: 25, roadLabel: '山', labelT: 0.35 },
   { from: 'capital', to: 'harbor', weight: 12, roadLabel: '港街道' },
   { from: 'forest', to: 'mountain', weight: 3, roadLabel: '街道' },
   { from: 'forest', to: 'lake', weight: 4, roadLabel: '森', labelT: 0.8 },
   { from: 'mountain', to: 'pass', weight: 6, roadLabel: '街道' },
   { from: 'lake', to: 'pass', weight: 6, roadLabel: '街道' },
-  { from: 'lake', to: 'valley', weight: 9, roadLabel: '森', labelT: 0.2 },
+  { from: 'lake', to: 'valley', weight: 9, roadLabel: '森', labelT: 0.35 },
   { from: 'pass', to: 'goal', weight: 8, roadLabel: '街道' },
   { from: 'harbor', to: 'valley', weight: 3, roadLabel: '港街道' },
   { from: 'valley', to: 'goal', weight: 10, roadLabel: '谷道' },
