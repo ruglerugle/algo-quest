@@ -1996,6 +1996,7 @@ function buildRecursionRuntime() {
     baseDepth: 5,
     crashed: false,
     returning: false,
+    value: null,
     cleared: false,
   };
 }
@@ -2005,14 +2006,12 @@ function doRecursionStep(state, api) {
   if (rt.phase === 'noBase') {
     if (rt.crashed) return;
     rt.depth += 1;
+    api.log(`鏡の中へ入りました。(深さ${rt.depth}) まだ奥に鏡が続いています…`);
     if (rt.depth >= rt.crashWarnDepth) {
       rt.crashed = true;
-      api.log(`鏡の中へ入りました。(深さ${rt.depth})`);
-      api.log('スタックオーバーフロー！止まる条件(ベースケース)がないと、再帰は無限に深くなってしまいます。', 'err');
+      api.log('スタックオーバーフロー！止まる条件(ベースケース)がないと鏡は無限に続き、答えが返ってきません。', 'err');
       api.setStatus('失敗：止まる条件がなく無限に呼び出され続けました', 'err');
       state.playing = false;
-    } else {
-      api.log(`鏡の中へ入りました。(深さ${rt.depth})`);
     }
     api.refreshActions();
     api.render();
@@ -2023,16 +2022,19 @@ function doRecursionStep(state, api) {
     rt.depth += 1;
     if (rt.depth >= rt.baseDepth) {
       rt.returning = true;
-      api.log(`鏡の一番奥(深さ${rt.depth})で小さな鍵を見つけました！止まる条件に達したので、ここから戻ります。`, 'ok');
+      rt.value = 1;
+      api.log(`鏡の一番奥(深さ${rt.depth})で本物の宝石を見つけました！これが止まる条件(ベースケース)＝宝石1個です。`, 'ok');
     } else {
-      api.log(`鏡の中へ入りました。(深さ${rt.depth})`);
+      api.log(`鏡の中へ入りました。(深さ${rt.depth}) まだ奥に鏡が続いています…`);
     }
   } else {
+    rt.value *= 2;
     rt.depth -= 1;
-    api.log(`鏡から戻りました。(深さ${rt.depth})`);
+    api.log(`鏡${rt.depth + 1}枚目を抜けると、映る宝石の数が2倍の${rt.value}個になりました。`);
     if (rt.depth === 0) {
       rt.cleared = true;
-      api.setStatus(`完了：最大の深さ ${rt.baseDepth}`, 'ok');
+      api.log(`外に出ると、合計${rt.value}個の宝石が見えました！`, 'ok');
+      api.setStatus(`完了：最終的に${rt.value}個`, 'ok');
       state.playing = false;
     }
   }
@@ -2045,8 +2047,9 @@ function advanceRecursionPhase(state, api) {
   rt.phase = 'withBase';
   rt.depth = 0;
   rt.returning = false;
+  rt.value = null;
   state.playing = false;
-  api.log('今度は「深さ5に達したら戻る」という止まる条件(ベースケース)を追加してみましょう。');
+  api.log('今度は「深さ5(本物の宝石)に達したら戻る」という止まる条件(ベースケース)を追加してみましょう。');
   api.refreshActions();
   api.render();
 }
@@ -2063,12 +2066,14 @@ function renderRecursionVisual(container, state) {
   live.className = 'live-desc';
   if (rt.phase === 'noBase') {
     live.textContent = rt.crashed
-      ? 'スタックオーバーフロー！止まる条件がないと無限に鏡へ入り続けてしまいます。'
+      ? 'スタックオーバーフロー！止まる条件がないと、答えが返ってこないまま無限に鏡へ入り続けてしまいます。'
       : '「鏡に入る」を押すたびに、もう一段深い鏡の部屋に入ります。';
+  } else if (rt.cleared) {
+    live.textContent = `無事に戻ってきて、合計${rt.value}個の宝石が見えました！`;
+  } else if (!rt.returning) {
+    live.textContent = `鏡は奥に映るものを2倍にして見せます。深さ${rt.baseDepth}(本物の宝石)に達するまで入り続けます。`;
   } else {
-    live.textContent = rt.cleared
-      ? '無事に元の部屋まで戻ってきました！'
-      : (rt.returning ? '鍵を手に、1段ずつ元の部屋へ戻っています。' : `深さ${rt.baseDepth}に達するまで鏡に入り続けます。`);
+    live.textContent = `宝石${rt.value}個を手に、1段戻るごとに数を2倍にしています。`;
   }
   container.appendChild(live);
 
@@ -2082,12 +2087,13 @@ function renderRecursionVisual(container, state) {
     box.textContent = `鏡の部屋（深さ${d}）`;
     tower.appendChild(box);
   }
-  if (rt.depth === 0) {
-    const box = document.createElement('div');
-    box.className = 'stack-room top';
-    box.textContent = '元の部屋（深さ0）';
-    tower.appendChild(box);
-  }
+  const ground = document.createElement('div');
+  ground.className = 'stack-room';
+  if (rt.depth === 0) ground.classList.add('top');
+  ground.textContent = rt.phase === 'withBase' && rt.value !== null && rt.depth === 0
+    ? `外の部屋（宝石 ${rt.value}個）`
+    : '外の部屋（深さ0）';
+  tower.appendChild(ground);
   container.appendChild(tower);
 }
 
@@ -2114,14 +2120,14 @@ function renderRecursionActions(container, state, api) {
     next.textContent = 'ステージクリア！';
     next.addEventListener('click', () => {
       api.completeStage();
-      api.log('止まる条件(ベースケース)があるから、再帰は必ず終わって元に戻ってこられます。', 'ok');
+      api.log('止まる条件(ベースケース)があるから、再帰は必ず終わり、答えを組み立てながら戻ってこられます。', 'ok');
       api.render();
     });
     container.appendChild(next);
     return;
   }
   const btn = document.createElement('button');
-  btn.textContent = rt.returning ? '鏡から戻る' : '鏡に入る（再帰呼び出し）';
+  btn.textContent = rt.returning ? '鏡から戻る（宝石の数を2倍にする）' : '鏡に入る（再帰呼び出し）';
   btn.addEventListener('click', () => doRecursionStep(state, api));
   container.appendChild(btn);
 }
@@ -2129,10 +2135,11 @@ function renderRecursionActions(container, state, api) {
 const STAGE_RECURSION = {
   navLabel: '⑬再帰',
   title: '第13章 魔法の鏡の間 ― 再帰 ―',
-  missionText: '鏡の中にはまた同じ部屋がある。止まる条件(ベースケース)がないと、無限に続いてしまう。',
+  missionText: '鏡の一番奥にある本物の宝石を見つけたら、1段戻るごとに見える数が2倍になる。止まる条件(ベースケース)がないと、答えは永遠に返ってこない。',
   dialogue: [
-    { who: '魔法使い', text: 'この鏡に入ると、また同じ部屋に出る…かもしれない。気をつけてくれ。' },
-    { who: 'あなた', text: '入り続けるだけだと、いつまでも終わらなさそうです。' },
+    { who: '魔法使い', text: 'この鏡の一番奥には本物の宝石が1つだけある。手前の鏡は、奥に映るものを2倍にして見せるんだ。' },
+    { who: 'あなた', text: 'ということは、奥から戻ってくるたびに数を2倍にしていけば、最後に見える数が分かりますね。' },
+    { who: 'あなた', text: 'でも「これが本物だ」と止まる条件がないと、いつまでも奥を覗き続けて答えが出せなさそうです。' },
   ],
   build() {
     return { runtime: buildRecursionRuntime() };
