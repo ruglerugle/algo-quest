@@ -341,6 +341,7 @@ function renderBars(container, arr, opts = {}) {
     if (opts.swap?.includes(idx)) bar.classList.add('swap');
     if (opts.pivot === idx) bar.classList.add('pivot');
     if (opts.sortedFrom !== undefined && idx >= opts.sortedFrom) bar.classList.add('sorted');
+    if (opts.sortedIndices?.has(idx)) bar.classList.add('sorted');
     if (opts.allSorted) bar.classList.add('sorted');
     wrap.appendChild(bar);
   });
@@ -448,6 +449,7 @@ function buildQuickRuntime() {
     quick: {
       arr: [...values], events, eventIdx: -1, comparisons, swaps,
       done: false, highlight: null, opsSoFar: 0,
+      confirmed: new Set(),
       liveDesc: '「再生」ボタンか「1ステップ」でクイックソートを開始します。',
     },
   };
@@ -477,6 +479,8 @@ function advanceQuickEvents(state, api, count) {
       q.highlight = { compare: [], swap: [], pivot: null };
       q.liveDesc = '基準の位置が確定！ 左側は基準より軽く、右側は基準より重い荷物に分かれました。';
       api.log('基準の位置が確定。左は基準より軽い・右は基準より重い荷物に分かれました。', 'ok');
+    } else if (ev.type === 'confirmed') {
+      q.confirmed.add(ev.index);
     } else if (ev.type === 'done') {
       q.done = true;
     }
@@ -515,6 +519,7 @@ function renderQuickVisual(container, state) {
     compare: q.highlight?.compare ?? [],
     swap: q.highlight?.swap ?? [],
     pivot: q.highlight?.pivot ?? null,
+    sortedIndices: q.confirmed,
     allSorted: q.done,
   });
   container.appendChild(barsBox);
