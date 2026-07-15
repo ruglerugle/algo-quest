@@ -244,10 +244,10 @@ body {
 
 .bar-boundary {
   align-self: stretch;
-  width: 3px;
+  width: 1px;
   margin: 0 2px;
   background-image: repeating-linear-gradient(to bottom, #fff 0, #fff 6px, transparent 6px, transparent 12px);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
 }
 
 .live-desc {
