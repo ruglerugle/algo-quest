@@ -357,8 +357,10 @@ body {
   border: 1px solid var(--text-dim);
   border-radius: 4px;
   padding: 0 4px;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
 }
+.book-recommend-body { display: flex; align-items: center; gap: 12px; }
+.book-recommend-cover { width: 60px; height: auto; border-radius: 3px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); flex-shrink: 0; }
 .book-recommend-lead { font-size: 12px; color: var(--text-dim); margin: 0 0 4px; font-weight: 700; }
 #book-recommend a { font-size: 13px; color: var(--wood); font-weight: 900; text-decoration: underline; }
 

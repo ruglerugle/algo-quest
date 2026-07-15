@@ -59,14 +59,22 @@ export function renderStatusBox(stageDef, state) {
 const BOOK_RECOMMEND = {
   title: '石畑清『アルゴリズムとデータ構造』(岩波講座 ソフトウェア科学)',
   url: 'https://www.amazon.co.jp/dp/4000103431?tag=senjin-22',
+  cover: 'https://m.media-amazon.com/images/I/41lM1rzG12L._SY385_.jpg',
 };
 
 export function renderBookRecommend(lead) {
   const el = document.getElementById('book-recommend');
   el.innerHTML = `
-    <p class="book-recommend-label">[PR]</p>
-    <p class="book-recommend-lead">${escapeHtml(lead)}</p>
-    <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
+    <p class="book-recommend-label">参考文献</p>
+    <div class="book-recommend-body">
+      <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">
+        <img src="${BOOK_RECOMMEND.cover}" alt="${escapeHtml(BOOK_RECOMMEND.title)}" class="book-recommend-cover">
+      </a>
+      <div>
+        <p class="book-recommend-lead">${escapeHtml(lead)}</p>
+        <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
+      </div>
+    </div>
   `;
 }
 
