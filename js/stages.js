@@ -524,7 +524,7 @@ function renderQuickVisual(container, state) {
   container.innerHTML = '';
   const rangeSize = q.done ? 0 : q.range.hi - q.range.lo + 1;
   const info = document.createElement('div');
-  info.className = 'stage-info';
+  info.className = 'stage-info stage-info--tall';
   const boundaryText = q.boundary != null ? ` / 軽いグループ: ${q.boundary - q.range.lo}個` : '';
   info.textContent = q.done
     ? `荷物${q.arr.length}個 / 比較${q.comparisons}回・交換${q.swaps}回 / 進捗 ${q.eventIdx + 1}/${q.events.length}`
@@ -532,7 +532,7 @@ function renderQuickVisual(container, state) {
   container.appendChild(info);
 
   const live = document.createElement('div');
-  live.className = 'live-desc';
+  live.className = 'live-desc live-desc--tall';
   live.textContent = q.liveDesc;
   container.appendChild(live);
 
