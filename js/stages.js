@@ -1235,7 +1235,7 @@ function renderDfsVisual(container, state) {
         visited && isDeadend ? 'deadend' : '',
       ].filter(Boolean).join(' ');
     },
-    viewBox: '0 0 500 440',
+    viewBox: '0 0 580 440',
   });
   container.appendChild(mapBox);
 
@@ -1409,7 +1409,7 @@ function renderBfsVisual(container, state) {
         visited && !node.isHydrant && node.children.length > 0 ? 'onpath' : '',
       ].filter(Boolean).join(' ');
     },
-    viewBox: '0 0 450 350',
+    viewBox: '0 0 450 420',
   });
   container.appendChild(mapBox);
 
