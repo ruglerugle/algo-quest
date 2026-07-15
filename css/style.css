@@ -173,6 +173,7 @@ body {
 .cave-map { display: block; width: 100%; max-width: 100%; height: auto; background: #1c1208; border-radius: 10px; padding: 8px; }
 .cave-edge { stroke: rgba(200, 168, 106, 0.35); stroke-width: 3; }
 .cave-edge.on-path { stroke: var(--gold); stroke-width: 4; }
+.cave-edge.final-path { stroke: var(--ok); stroke-width: 5; }
 
 .cave-room rect { fill: #2c1d0e; stroke: var(--border); stroke-width: 2; }
 .cave-room text { fill: #fdf3da; font-size: 16px; font-weight: 700; }
@@ -199,6 +200,9 @@ body {
 .cave-room.candidate rect { fill: #1c3548; stroke: var(--info); }
 .cave-room.candidate text { fill: #8ec9ef; }
 
+.cave-room.final-path rect { fill: #163d24; stroke: var(--ok); stroke-width: 3; }
+.cave-room.final-path text { fill: #8fe3a3; }
+
 .graph-node-sub { fill: #cbb98a; font-size: 12px; font-weight: 700; }
 .graph-edge-label { fill: #cbb98a; font-size: 11px; }
 
@@ -208,6 +212,7 @@ body {
 .legend-swatch.cave-deadend { background: #3d1712; border: 2px solid var(--danger); }
 .legend-swatch.cave-unvisited { background: #241608; border: 2px solid rgba(200, 168, 106, 0.3); }
 .legend-swatch.cave-candidate { background: #1c3548; border: 2px solid var(--info); }
+.legend-swatch.cave-final-path { background: #163d24; border: 2px solid var(--ok); }
 
 .queue-track { display: flex; gap: 10px; flex-wrap: wrap; }
 .queue-card {

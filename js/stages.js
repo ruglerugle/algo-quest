@@ -1560,6 +1560,21 @@ function doDijkstraStep(state, api) {
   api.render();
 }
 
+function getKingdomShortestPath(rt) {
+  const nodes = new Set();
+  const edges = new Set();
+  if (!rt.cleared || rt.goalId == null) return { nodes, edges };
+  let cur = rt.goalId;
+  nodes.add(cur);
+  while (rt.prev[cur] !== undefined) {
+    const prev = rt.prev[cur];
+    edges.add(`${prev}->${cur}`);
+    nodes.add(prev);
+    cur = prev;
+  }
+  return { nodes, edges };
+}
+
 function renderDijkstraVisual(container, state) {
   const rt = state.stageRuntime;
   container.innerHTML = '';
@@ -1575,6 +1590,8 @@ function renderDijkstraVisual(container, state) {
     : '「1手」で、今わかっている中で一番近い場所を確定させます。';
   container.appendChild(live);
 
+  const path = getKingdomShortestPath(rt);
+
   const mapBox = document.createElement('div');
   renderGraphSvg(mapBox, {
     positions: KINGDOM_POS,
@@ -1584,17 +1601,21 @@ function renderDijkstraVisual(container, state) {
       return e ? `${e.roadLabel} ${e.weight}分` : '';
     },
     edgeLabelT: (from, to) => findKingdomEdge(from, to)?.labelT ?? 0.5,
-    edgeClass: (from, to) => (rt.settled.has(from) && rt.prev[to] === from ? 'on-path' : ''),
+    edgeClass: (from, to) => {
+      if (path.edges.has(`${from}->${to}`)) return 'final-path';
+      return rt.settled.has(from) && rt.prev[to] === from ? 'on-path' : '';
+    },
     nodeLabel: (id) => KINGDOM_NODES[id].label,
     nodeSubLabel: (id) => (rt.dist[id] === Infinity ? '∞' : `${rt.dist[id]}分`),
     nodeClass: (id) => {
       const node = KINGDOM_NODES[id];
       const settled = rt.settled.has(id);
+      const onFinalPath = path.nodes.has(id);
       return [
         !settled && rt.dist[id] === Infinity ? 'unvisited' : '',
         !settled && rt.dist[id] !== Infinity ? 'candidate' : '',
-        settled && node.isGoal ? 'treasure' : '',
-        settled && !node.isGoal ? 'onpath' : '',
+        settled && onFinalPath ? 'final-path' : '',
+        settled && !onFinalPath ? 'onpath' : '',
       ].filter(Boolean).join(' ');
     },
     viewBox: '0 0 800 450',
@@ -1602,9 +1623,9 @@ function renderDijkstraVisual(container, state) {
   container.appendChild(mapBox);
 
   renderBarLegend(container, [
+    { cls: 'cave-final-path', label: '最短ルート' },
     { cls: 'cave-onpath', label: '最短時間が確定' },
     { cls: 'cave-candidate', label: '候補（時間わかっている）' },
-    { cls: 'cave-treasure', label: 'ゴール確定' },
     { cls: 'cave-unvisited', label: 'まだ分からない' },
   ]);
 }
