@@ -236,6 +236,22 @@ body {
 .queue-card.severity-2 { border-color: var(--warn); }
 .queue-card.severity-1 { border-color: var(--border); }
 
+.stair-visual {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 110px;
+  padding: 8px;
+  background: #1c1208;
+  border-radius: 10px;
+}
+.stair-step {
+  width: 22px;
+  background: rgba(200, 168, 106, 0.25);
+  border-radius: 3px 3px 0 0;
+}
+.stair-step.done { background: linear-gradient(180deg, #e7c873, var(--gold)); }
+
 .bars {
   display: flex;
   align-items: flex-end;

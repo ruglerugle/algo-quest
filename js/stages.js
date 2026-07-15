@@ -1699,93 +1699,75 @@ const STAGE_DIJKSTRA = {
 // ステージ10: 動的計画法
 // ============================================================
 
-const DP_PHASES = [
-  { mode: 'naive', target: 8 },
-  { mode: 'memo', target: 20 },
-];
+// 依頼として計算する段数の並び（だんだん増え、最後に一気に20段まで挑戦する）
+const DP_TARGETS = [3, 4, 5, 6, 7, 8, 20];
 
 function buildDPStagePhase(phaseIdx) {
-  const def = DP_PHASES[phaseIdx];
   return {
     phaseIdx,
-    mode: def.mode,
-    target: def.target,
-    memo: {},
-    stack: [{ n: def.target, slot: null, leftDone: false, rightDone: false, leftVal: null, rightVal: null }],
-    calls: 1,
-    result: null,
+    mode: phaseIdx === 0 ? 'naive' : 'memo',
+    roundIdx: 0,
+    roundActive: false,
+    table: {},
+    totalClicks: 0,
     cleared: false,
   };
 }
 
-function dpResolveTop(state, api, value) {
-  const rt = state.stageRuntime;
-  const frame = rt.stack.pop();
-  if (rt.mode === 'memo') rt.memo[frame.n] = value;
-  if (rt.stack.length === 0) {
-    rt.result = value;
-    rt.cleared = true;
-    api.log(`ways(${rt.target}) = ${value}（呼び出し回数: ${rt.calls}回）`, 'ok');
-    api.setStatus(`完了：呼び出し回数 ${rt.calls}回`, 'ok');
-    state.playing = false;
-    api.refreshActions();
-  } else {
-    const parent = rt.stack[rt.stack.length - 1];
-    if (frame.slot === 'left') { parent.leftVal = value; parent.leftDone = true; } else { parent.rightVal = value; parent.rightDone = true; }
-  }
-  api.render();
+function nextUnknownStep(table) {
+  let n = 1;
+  while (table[n] !== undefined) n += 1;
+  return n;
 }
 
 function doDPStep(state, api) {
   const rt = state.stageRuntime;
   if (rt.cleared) return;
-  const top = rt.stack[rt.stack.length - 1];
-  if (top.n <= 1) {
-    dpResolveTop(state, api, 1);
+  if (!rt.roundActive) {
+    if (rt.mode === 'naive') rt.table = {};
+    rt.roundActive = true;
+  }
+  const target = DP_TARGETS[rt.roundIdx];
+  const n = nextUnknownStep(rt.table);
+  if (n > target) {
+    api.log(`${target}段の上り方は ${rt.table[target]}通りでした。`, 'ok');
+    rt.roundActive = false;
+    rt.roundIdx += 1;
+    if (rt.roundIdx >= DP_TARGETS.length) {
+      rt.cleared = true;
+      api.setStatus(`完了：合計クリック数 ${rt.totalClicks}回`, 'ok');
+      state.playing = false;
+    } else {
+      api.log(`次の依頼：${DP_TARGETS[rt.roundIdx]}段の上り方を計算しましょう。`);
+    }
+    api.refreshActions();
+    api.render();
     return;
   }
-  if (!top.leftDone) {
-    const cached = rt.memo[top.n - 1];
-    if (cached !== undefined) {
-      top.leftVal = cached;
-      top.leftDone = true;
-      api.log(`ways(${top.n - 1}) はメモ化済み → ${cached}（計算せず再利用）`, 'ok');
-    } else {
-      rt.stack.push({ n: top.n - 1, slot: 'left', leftDone: false, rightDone: false, leftVal: null, rightVal: null });
-      rt.calls += 1;
-      api.log(`ways(${top.n - 1}) を呼び出します。`);
-    }
-  } else if (!top.rightDone) {
-    const cached = rt.memo[top.n - 2];
-    if (cached !== undefined) {
-      top.rightVal = cached;
-      top.rightDone = true;
-      api.log(`ways(${top.n - 2}) はメモ化済み → ${cached}（計算せず再利用）`, 'ok');
-    } else {
-      rt.stack.push({ n: top.n - 2, slot: 'right', leftDone: false, rightDone: false, leftVal: null, rightVal: null });
-      rt.calls += 1;
-      api.log(`ways(${top.n - 2}) を呼び出します。`);
-    }
-  } else {
-    dpResolveTop(state, api, top.leftVal + top.rightVal);
-    return;
-  }
+  let value;
+  if (n === 1) value = 1;
+  else if (n === 2) value = 2;
+  else value = rt.table[n - 1] + rt.table[n - 2];
+  rt.table[n] = value;
+  rt.totalClicks += 1;
+  api.log(n <= 2
+    ? `${n}段：${value}通り（これ以上分けられない土台の数字です）`
+    : `${n}段 = ${n - 1}段(${rt.table[n - 1]}通り) + ${n - 2}段(${rt.table[n - 2]}通り) = ${value}通り`);
   api.render();
 }
 
 function advanceDPPhase(state, api) {
   const rt = state.stageRuntime;
   const nextIdx = rt.phaseIdx + 1;
-  if (nextIdx >= DP_PHASES.length) {
+  if (nextIdx >= 2) {
     api.completeStage();
-    api.log(`メモ化のおかげで、ways(20)のような大きな計算もたった${rt.calls}回で終わりました。`, 'ok');
+    api.log(`メモ化ありなら合計${rt.totalClicks}回で済みました。一度計算した段の数字を覚えておくだけで、同じ計算をやり直さずに済みます。`, 'ok');
     api.render();
     return;
   }
   state.playing = false;
   state.stageRuntime = buildDPStagePhase(nextIdx);
-  const next = DP_PHASES[nextIdx];
-  api.log(`依頼：今度は ways(${next.target}) を、計算結果を覚えながら(メモ化)計算してください。`, 'ok');
+  api.log('依頼：今度は同じ依頼を、一度計算した段の数字を覚えながら(メモ化)解いてみましょう。');
   api.refreshActions();
   api.render();
 }
@@ -1793,61 +1775,62 @@ function advanceDPPhase(state, api) {
 function renderDPVisual(container, state) {
   const rt = state.stageRuntime;
   container.innerHTML = '';
+  const target = DP_TARGETS[Math.min(rt.roundIdx, DP_TARGETS.length - 1)];
   const info = document.createElement('div');
   info.className = 'stage-info';
-  info.textContent = `目標: ways(${rt.target}) / 呼び出し回数: ${rt.calls}回 / モード: ${rt.mode === 'memo' ? 'メモ化あり' : 'メモ化なし'}`;
+  info.textContent = `モード: ${rt.mode === 'memo' ? 'メモ化あり' : 'メモ化なし'} / 今回の依頼: ${target}段 / 合計クリック数: ${rt.totalClicks}回`;
   container.appendChild(info);
 
   const live = document.createElement('div');
   live.className = 'live-desc';
   if (rt.cleared) {
-    live.textContent = `ways(${rt.target}) = ${rt.result} が確定しました！`;
+    live.textContent = '全ての依頼が完了しました！';
   } else {
-    const top = rt.stack[rt.stack.length - 1];
-    live.textContent = top.n <= 1
-      ? `ways(${top.n}) はベースケース（1通り）としてすぐ返せます。`
-      : (!top.leftDone ? `ways(${top.n}) を計算中…まず ways(${top.n - 1}) が必要です。`
-        : (!top.rightDone ? `次に ways(${top.n - 2}) が必要です。` : `ways(${top.n}) = ${top.leftVal} + ${top.rightVal} を計算します。`));
+    const n = nextUnknownStep(rt.table);
+    if (n > target) {
+      live.textContent = `${target}段の上り方は ${rt.table[target]}通り！次の依頼に進みましょう。`;
+    } else if (n <= 2) {
+      live.textContent = `${n}段だけなら上り方は${n}通りです。まずこの土台を計算しましょう。`;
+    } else {
+      live.textContent = `${n}段の上り方 = ${n - 1}段の上り方 + ${n - 2}段の上り方 で計算できます。`;
+    }
   }
   container.appendChild(live);
 
-  const tower = document.createElement('div');
-  tower.className = 'stack-tower';
-  [...rt.stack].reverse().forEach((frame, i) => {
-    const box = document.createElement('div');
-    box.className = 'stack-room';
-    if (i === 0) box.classList.add('top');
-    box.textContent = `ways(${frame.n})`;
-    tower.appendChild(box);
-  });
-  container.appendChild(tower);
-
-  if (rt.mode === 'memo') {
-    const memoKeys = Object.keys(rt.memo).map(Number).sort((a, b) => a - b);
-    if (memoKeys.length) {
-      renderQueueTrack(container, memoKeys, (k) => {
-        const card = document.createElement('div');
-        card.className = 'queue-card front';
-        card.innerHTML = `<span class="tag">ways(${k})</span><span class="name">${rt.memo[k]}</span>`;
-        return card;
-      });
-    }
+  const stairs = document.createElement('div');
+  stairs.className = 'stair-visual';
+  for (let s = 1; s <= Math.min(target, 12); s += 1) {
+    const step = document.createElement('div');
+    step.className = 'stair-step';
+    if (rt.table[s] !== undefined) step.classList.add('done');
+    step.style.height = `${s * 8}px`;
+    stairs.appendChild(step);
   }
+  container.appendChild(stairs);
+
+  const rows = Object.keys(rt.table).map(Number).sort((a, b) => a - b);
+  renderQueueTrack(container, rows, (n) => {
+    const card = document.createElement('div');
+    card.className = 'queue-card';
+    if (n === target) card.classList.add('front');
+    card.innerHTML = `<span class="tag">${n}段</span><span class="name">${rt.table[n]}通り</span>`;
+    return card;
+  });
 }
 
 function renderDPActions(container, state, api) {
   const rt = state.stageRuntime;
   if (rt.cleared) {
-    const isLast = rt.phaseIdx >= DP_PHASES.length - 1;
+    const isLast = rt.phaseIdx >= 1;
     const next = document.createElement('button');
     next.className = 'primary';
-    next.textContent = isLast ? 'ステージクリア！' : `次の依頼へ（メモ化ありで ways(${DP_PHASES[rt.phaseIdx + 1].target})）`;
+    next.textContent = isLast ? 'ステージクリア！' : '次の依頼へ（メモ化ありで挑戦）';
     next.addEventListener('click', () => advanceDPPhase(state, api));
     container.appendChild(next);
     return;
   }
   const btn = document.createElement('button');
-  btn.textContent = '1手進める（計算する）';
+  btn.textContent = '1段分を計算する';
   btn.addEventListener('click', () => doDPStep(state, api));
   container.appendChild(btn);
 }
@@ -1855,11 +1838,11 @@ function renderDPActions(container, state, api) {
 const STAGE_DP = {
   navLabel: '⑪動的計画法',
   title: '第11章 宝箱の階段 ― 動的計画法 ―',
-  missionText: '階段の上り方(1歩か2歩)が何通りあるか数えよう。同じ計算をやり直していないか確認してみよう。',
+  missionText: '階段の上り方(1歩か2歩)が何通りあるか、1段目から順に数えていこう。1段なら1通り、2段なら2通り…同じ計算をやり直していないか確認しよう。',
   dialogue: [
     { who: '王', text: '宝箱までの階段の上り方が何通りあるか知りたい。1歩か2歩ずつ進めるとして数えてくれ。' },
-    { who: 'あなた', text: '愚直に計算すると、同じ「残り◯段」の計算を何度も繰り返してしまいそうです。' },
-    { who: 'あなた', text: '一度計算した結果を覚えておけば(メモ化)、同じ計算をやり直さずに済みますね。' },
+    { who: 'あなた', text: '1段なら1通り、2段なら「1+1」か「2」の2通り。3段目からは、1段前と2段前の答えを足せば求まりますね。' },
+    { who: 'あなた', text: 'でも毎回1段目からやり直していたら、大きい段数では大変です。一度計算した数字を覚えておきましょう。' },
   ],
   build() {
     return { runtime: buildDPStagePhase(0) };
@@ -1871,8 +1854,8 @@ const STAGE_DP = {
   statusInfo: (state) => {
     const rt = state.stageRuntime;
     return rt.mode === 'memo'
-      ? { name: '動的計画法 (メモ化あり)', complexity: 'O(N)', operations: rt.calls }
-      : { name: '動的計画法 (メモ化なし)', complexity: 'O(2^N)', operations: rt.calls };
+      ? { name: '動的計画法 (メモ化あり)', complexity: 'O(N)', operations: rt.totalClicks }
+      : { name: '動的計画法 (メモ化なし)', complexity: 'O(N²)（依頼のたびにやり直す）', operations: rt.totalClicks };
   },
 };
 
