@@ -246,9 +246,8 @@ body {
   align-self: stretch;
   width: 3px;
   margin: 0 2px;
-  background: var(--gold);
-  border-radius: 2px;
-  box-shadow: 0 0 6px rgba(202, 162, 58, 0.9);
+  background-image: repeating-linear-gradient(to bottom, #fff 0, #fff 6px, transparent 6px, transparent 12px);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
 }
 
 .live-desc {
@@ -275,7 +274,11 @@ body {
 .legend-swatch.swap { background: var(--danger); }
 .legend-swatch.sorted { background: var(--ok); }
 .legend-swatch.pivot { background: var(--gold); outline: 2px solid #fff; }
-.legend-swatch.boundary { width: 4px; background: var(--gold); box-shadow: 0 0 6px rgba(202, 162, 58, 0.9); }
+.legend-swatch.boundary {
+  width: 4px;
+  background-image: repeating-linear-gradient(to bottom, #fff 0, #fff 4px, transparent 4px, transparent 8px);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
 
 #stage-actions { display: flex; gap: 10px; flex-wrap: wrap; min-width: 0; }
 #stage-actions button, #control-bar button {
