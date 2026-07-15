@@ -7,10 +7,15 @@ const NAME_POOL = [
 ];
 
 // NAME_POOLを使い切った分の穴埋め用（姓+名の組み合わせで実在感のある名前を生成する）
+// 五十音順ソート(compareNames)が正しく機能するよう、姓もカタカナで統一する
 const FILLER_SURNAMES = [
-  '佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤',
-  '吉田', '山田', '佐々木', '山口', '松本', '井上', '木村', '林', '斎藤', '清水',
-  '山崎', '森', '池田', '橋本', '阿部', '石川', '前田', '藤田', '後藤', '岡田',
+  'スミス', 'ジョーンズ', 'ブラウン', 'テイラー', 'ウィルソン', 'ムーア', 'クラーク', 'ホワイト',
+  'ハリス', 'マーティン', 'トンプソン', 'ヤング', 'ウォーカー', 'アレン', 'キング', 'ライト',
+  'ヒル', 'グリーン', 'アダムス', 'ベイカー', 'ネルソン', 'カーター', 'ミッチェル', 'ロバーツ',
+  'ターナー', 'フィリップス', 'パーカー', 'エバンス', 'エドワーズ', 'コリンズ', 'ステュワート', 'サンチェス',
+  'モリス', 'ロジャース', 'リード', 'クック', 'モーガン', 'ベル', 'マーフィー', 'バード',
+  'クーパー', 'リチャードソン', 'ウッド', 'ワトソン', 'ブルックス', 'ベネット', 'グレイ', 'ジェームズ',
+  'ヘイズ', 'マイヤーズ',
 ];
 const FILLER_GIVEN = [
   'アリス', 'ボブ', 'キャロル', 'ダイスケ', 'エミリー', 'フランク', 'グレース', 'ヒロシ',
@@ -18,6 +23,8 @@ const FILLER_GIVEN = [
   'クミコ', 'リョウ', 'サキ', 'タロウ', 'ユミ', 'ワタル', 'ミサキ', 'ケンジ',
   'ハルカ', 'ソウタ', 'アヤカ', 'コウジ', 'マナミ', 'ユウキ', 'チヒロ', 'リク',
   'サユリ', 'ダイキ', 'ホノカ', 'シュン', 'アカリ', 'ケイタ', 'ミユ', 'ハヤト',
+  'ナツミ', 'ケント', 'エリカ', 'マサト', 'リナ', 'ショウ', 'ミオ', 'タクミ',
+  'カズヤ', 'サトシ',
 ];
 
 function generateFillerName(i) {
@@ -46,8 +53,16 @@ function shuffle(arr) {
  */
 export function generateVillagers(n, { target, sorted = false } = {}) {
   const villagers = [];
+  const usedCount = {};
   for (let i = 0; i < n; i += 1) {
-    const name = i < NAME_POOL.length ? NAME_POOL[i] : generateFillerName(i - NAME_POOL.length);
+    let name;
+    if (i < NAME_POOL.length) {
+      name = NAME_POOL[i];
+    } else {
+      const base = generateFillerName(i - NAME_POOL.length);
+      usedCount[base] = (usedCount[base] || 0) + 1;
+      name = usedCount[base] > 1 ? `${base}(${usedCount[base]})` : base;
+    }
     villagers.push({ id: i, name });
   }
   if (target && !villagers.some((v) => v.name === target)) {
