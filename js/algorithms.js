@@ -128,13 +128,11 @@ export function computeQuickSortEvents(values) {
     for (let j = lo; j < hi; j += 1) {
       comparisons += 1;
       const isLess = arr[j] < pivot;
-      events.push({ type: 'compare', i: j, j: pivotIndex });
+      const compareEvent = { type: 'compare', i: j, j: pivotIndex };
+      if (isLess && i === j) compareEvent.boundary = i + 1;
+      events.push(compareEvent);
       if (isLess) {
-        if (i !== j) {
-          swap(i, j, i + 1);
-        } else {
-          events.push({ type: 'boundary', index: i + 1 });
-        }
+        if (i !== j) swap(i, j, i + 1);
         i += 1;
       }
     }
