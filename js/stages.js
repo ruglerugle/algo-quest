@@ -127,21 +127,24 @@ function renderLinearVisual(container, state, api) {
 
   const grid = document.createElement('div');
   grid.className = 'villager-grid';
+  let activeCard = null;
   rt.villagers.forEach((v, i) => {
     const card = document.createElement('button');
     card.className = 'villager-card';
     card.textContent = v.name;
     if (i < rt.linear.pointer || (i === rt.linear.pointer && !rt.linear.found)) card.classList.add('checked');
-    if (i === rt.linear.pointer && rt.linear.found) card.classList.add('found');
+    if (i === rt.linear.pointer && rt.linear.found) { card.classList.add('found'); activeCard = card; }
     if (i === rt.linear.pointer + 1 && !rt.linear.found && !rt.linear.exhausted) {
       card.classList.add('next');
       card.addEventListener('click', () => doLinearCheck(state, api));
+      activeCard = card;
     } else {
       card.disabled = true;
     }
     grid.appendChild(card);
   });
   container.appendChild(grid);
+  if (activeCard) activeCard.scrollIntoView({ block: 'nearest' });
 }
 
 function renderLinearActions(container, state, api) {
