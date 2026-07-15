@@ -1476,28 +1476,36 @@ const KINGDOM_NODES = {
   mountain: { label: '山の村' },
   lake: { label: '湖畔の町' },
   pass: { label: '峠' },
+  harbor: { label: '港町' },
+  valley: { label: '谷間の村' },
   goal: { label: '隣国', isGoal: true },
 };
 
 const KINGDOM_EDGES = [
   { from: 'capital', to: 'forest', weight: 5, roadLabel: '森' },
-  { from: 'capital', to: 'mountain', weight: 20, roadLabel: '山' },
-  { from: 'forest', to: 'mountain', weight: 2, roadLabel: '街道' },
-  { from: 'forest', to: 'lake', weight: 6, roadLabel: '森' },
-  { from: 'mountain', to: 'pass', weight: 4, roadLabel: '街道' },
-  { from: 'lake', to: 'pass', weight: 3, roadLabel: '街道' },
-  { from: 'lake', to: 'goal', weight: 15, roadLabel: '森' },
-  { from: 'pass', to: 'goal', weight: 3, roadLabel: '街道' },
-  { from: 'mountain', to: 'goal', weight: 2, roadLabel: '街道' },
+  { from: 'capital', to: 'mountain', weight: 25, roadLabel: '山' },
+  { from: 'capital', to: 'harbor', weight: 12, roadLabel: '港街道' },
+  { from: 'forest', to: 'mountain', weight: 3, roadLabel: '街道' },
+  { from: 'forest', to: 'lake', weight: 4, roadLabel: '森' },
+  { from: 'mountain', to: 'pass', weight: 6, roadLabel: '街道' },
+  { from: 'lake', to: 'pass', weight: 6, roadLabel: '街道' },
+  { from: 'lake', to: 'valley', weight: 9, roadLabel: '森' },
+  { from: 'pass', to: 'goal', weight: 8, roadLabel: '街道' },
+  { from: 'harbor', to: 'valley', weight: 3, roadLabel: '港街道' },
+  { from: 'valley', to: 'goal', weight: 10, roadLabel: '谷道' },
+  { from: 'harbor', to: 'goal', weight: 30, roadLabel: '海路（近道に見える一直線）' },
+  { from: 'mountain', to: 'goal', weight: 15, roadLabel: '険しい山道' },
 ];
 
 const KINGDOM_POS = {
-  capital: { x: 70, y: 220 },
-  forest: { x: 230, y: 100 },
-  mountain: { x: 230, y: 320 },
-  lake: { x: 410, y: 100 },
-  pass: { x: 410, y: 320 },
-  goal: { x: 580, y: 210 },
+  capital: { x: 60, y: 220 },
+  forest: { x: 220, y: 100 },
+  mountain: { x: 400, y: 60 },
+  lake: { x: 220, y: 340 },
+  pass: { x: 400, y: 220 },
+  harbor: { x: 60, y: 380 },
+  valley: { x: 560, y: 340 },
+  goal: { x: 720, y: 220 },
 };
 
 function kingdomNeighbors(id) {
@@ -1587,7 +1595,7 @@ function renderDijkstraVisual(container, state) {
         settled && !node.isGoal ? 'onpath' : '',
       ].filter(Boolean).join(' ');
     },
-    viewBox: '0 0 660 400',
+    viewBox: '0 0 800 450',
   });
   container.appendChild(mapBox);
 
@@ -1599,6 +1607,10 @@ function renderDijkstraVisual(container, state) {
   ]);
 }
 
+function findKingdomEdge(from, to) {
+  return KINGDOM_EDGES.find((e) => e.from === from && e.to === to);
+}
+
 function renderDijkstraActions(container, state, api) {
   const rt = state.stageRuntime;
   if (rt.cleared) {
@@ -1607,7 +1619,10 @@ function renderDijkstraActions(container, state, api) {
     next.textContent = 'ステージクリア！';
     next.addEventListener('click', () => {
       api.completeStage();
-      api.log('道ごとの時間を考えながら「今一番近い場所」から確定させていく…これがダイクストラ法です。', 'ok');
+      const harborDirect = findKingdomEdge('capital', 'harbor').weight + findKingdomEdge('harbor', 'goal').weight;
+      const mountainDirect = findKingdomEdge('capital', 'mountain').weight + findKingdomEdge('mountain', 'goal').weight;
+      api.log(`一直線に近い「海路」経由だと${harborDirect}分、「山道」経由だと${mountainDirect}分もかかります。見つけた道は${rt.dist[rt.goalId]}分で、実はどちらより速いのです。`, 'ok');
+      api.log('道ごとの時間を考えながら「今一番近い場所」から確定させていく…これがダイクストラ法のすごさです。', 'ok');
       api.render();
     });
     container.appendChild(next);
@@ -1622,11 +1637,11 @@ function renderDijkstraActions(container, state, api) {
 const STAGE_DIJKSTRA = {
   navLabel: '⑩ダイクストラ法',
   title: '第10章 王国マップ ― ダイクストラ法 ―',
-  missionText: '道によって時間が違う。王都から隣国までの最短時間の道を見つけよう。',
+  missionText: '道の数が増えて複雑になった。一直線の近道に見える道ほど、実は遠回りかもしれない。王都から隣国までの最短時間の道を見つけよう。',
   dialogue: [
-    { who: '王', text: '隣国まで一番早く着ける道を調べてくれ。森は5分、山は20分、街道は2分かかる。' },
-    { who: 'あなた', text: '一直線に近い道が、必ずしも一番速いとは限りませんね。' },
-    { who: 'あなた', text: '今わかっている中で一番近い場所から、確実に確定させていきましょう。' },
+    { who: '王', text: '隣国まで一番早く着ける道を調べてくれ。港からの海路は一直線で近そうだが…本当に一番速いか？' },
+    { who: 'あなた', text: '道の数が多くて、見た目だけでは判断できませんね。一直線に近い道が、必ずしも一番速いとは限りません。' },
+    { who: 'あなた', text: '今わかっている中で一番近い場所から、一つずつ確実に確定させていきましょう。' },
   ],
   build() {
     return { runtime: buildDijkstraRuntime() };
