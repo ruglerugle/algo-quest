@@ -13,11 +13,21 @@ export function renderStageNav(stages, state, onSelect) {
   });
 }
 
+const SPEAKER_ICONS = {
+  村長: 'images/soncho.png',
+  王: 'images/king.png',
+  あなた: 'images/you.png',
+};
+
 export function renderDialogue(stageDef) {
   const box = document.getElementById('dialogue-panel');
   const lines = stageDef.dialogue ?? [];
   box.innerHTML = lines.length
-    ? lines.map((l) => `<p class="dialogue-line"><span class="speaker">${escapeHtml(l.who)}</span>${escapeHtml(l.text)}</p>`).join('')
+    ? lines.map((l) => {
+        const icon = SPEAKER_ICONS[l.who];
+        const iconHtml = icon ? `<img src="${icon}" alt="${escapeHtml(l.who)}" class="speaker-icon">` : '';
+        return `<div class="dialogue-line">${iconHtml}<p><span class="speaker">${escapeHtml(l.who)}</span>${escapeHtml(l.text)}</p></div>`;
+      }).join('')
     : '';
 }
 

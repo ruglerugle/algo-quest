@@ -62,14 +62,22 @@ body {
 
 #dialogue-panel { display: flex; flex-direction: column; gap: 4px; }
 .dialogue-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 640px;
+}
+.dialogue-line p {
   margin: 0;
   padding: 8px 14px;
   background: var(--parchment);
   border: 1px solid var(--border);
   border-radius: 10px;
-  max-width: 640px;
+  flex: 1;
+  min-width: 0;
 }
 .dialogue-line .speaker { font-weight: 900; color: var(--wood); margin-right: 8px; }
+.speaker-icon { width: 44px; height: auto; flex-shrink: 0; }
 
 #mission-banner {
   background: var(--parchment-2);
