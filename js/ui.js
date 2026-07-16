@@ -25,8 +25,10 @@ export function renderDialogue(stageDef) {
   box.innerHTML = lines.length
     ? lines.map((l) => {
         const icon = SPEAKER_ICONS[l.who];
-        const iconHtml = icon ? `<img src="${icon}" alt="${escapeHtml(l.who)}" class="speaker-icon">` : '';
-        return `<div class="dialogue-line">${iconHtml}<p><span class="speaker">${escapeHtml(l.who)}</span>${escapeHtml(l.text)}</p></div>`;
+        const frameHtml = icon
+          ? `<div class="speaker-frame"><img src="${icon}" alt="${escapeHtml(l.who)}" class="speaker-icon"><span class="speaker-name-tag">${escapeHtml(l.who)}</span></div>`
+          : '';
+        return `<div class="dialogue-line">${frameHtml}<p class="dialogue-bubble">${escapeHtml(l.text)}</p></div>`;
       }).join('')
     : '';
 }

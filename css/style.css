@@ -60,24 +60,44 @@ body {
 #stage-nav button.active { background: var(--gold); color: #2c1d0e; }
 #stage-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-#dialogue-panel { display: flex; flex-direction: column; gap: 4px; }
+#dialogue-panel { display: flex; flex-direction: column; gap: 10px; }
 .dialogue-line {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   max-width: 640px;
-}
-.dialogue-line p {
-  margin: 0;
-  padding: 8px 14px;
+  padding: 10px 14px;
   background: var(--parchment);
   border: 1px solid var(--border);
   border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.speaker-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.speaker-icon {
+  width: 56px;
+  height: auto;
+  border-radius: 8px;
+}
+.speaker-name-tag {
+  font-size: 11px;
+  font-weight: 900;
+  color: #fdf3da;
+  background: var(--wood);
+  padding: 1px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.dialogue-bubble {
+  margin: 0;
   flex: 1;
   min-width: 0;
 }
-.dialogue-line .speaker { font-weight: 900; color: var(--wood); margin-right: 8px; }
-.speaker-icon { width: 44px; height: auto; flex-shrink: 0; }
 
 #mission-banner {
   background: var(--parchment-2);
