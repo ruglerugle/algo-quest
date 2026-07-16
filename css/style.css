@@ -67,7 +67,7 @@ body {
   gap: 12px;
   max-width: 640px;
   padding: 10px 14px;
-  background: var(--parchment);
+  background: var(--parchment-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
@@ -94,9 +94,34 @@ body {
   white-space: nowrap;
 }
 .dialogue-bubble {
+  position: relative;
   margin: 0;
+  padding: 10px 14px;
+  background: var(--parchment);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   flex: 1;
   min-width: 0;
+}
+.dialogue-bubble::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 10px solid var(--border);
+}
+.dialogue-bubble::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 9px solid var(--parchment);
 }
 
 #mission-banner {
