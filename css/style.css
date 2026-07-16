@@ -211,21 +211,71 @@ body {
 .queue-card .name { font-size: 15px; font-weight: 900; }
 .queue-card.front { border-color: var(--gold); background: #fff6da; transform: scale(1.08); }
 
+.chest-riddle {
+  background: linear-gradient(180deg, #3a2812, #241608);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  color: #e9dfc4;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  letter-spacing: 0.15em;
+  text-align: center;
+  font-size: 14px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 8px rgba(202, 162, 58, 0.4);
+}
+
 .stair-visual {
   display: flex;
   align-items: flex-end;
   gap: 4px;
-  height: 110px;
+  height: 150px;
   padding: 8px;
   background: #1c1208;
   border-radius: 10px;
+  position: relative;
 }
 .stair-step {
-  width: 22px;
+  width: 16px;
   background: rgba(200, 168, 106, 0.25);
   border-radius: 3px 3px 0 0;
 }
 .stair-step.done { background: linear-gradient(180deg, #e7c873, var(--gold)); }
+.chest-icon {
+  position: absolute;
+  top: 4px;
+  right: 10px;
+  width: 34px;
+  height: 22px;
+  background: linear-gradient(180deg, #8a5a2c, #5b3a1c);
+  border: 2px solid var(--gold);
+  border-radius: 4px 4px 2px 2px;
+}
+.chest-icon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px rgba(202, 162, 58, 0.8);
+}
+
+.chest-unlock { display: flex; gap: 8px; align-items: center; }
+.chest-unlock-input {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #fffdf5;
+  color: var(--text);
+  width: 160px;
+}
 
 .bars {
   display: flex;

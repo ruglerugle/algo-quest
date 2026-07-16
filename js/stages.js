@@ -878,8 +878,9 @@ const STAGE_DIJKSTRA = {
 // ステージ10: 動的計画法
 // ============================================================
 
-// 依頼として計算する段数の並び（だんだん増え、最後に一気に20段まで挑戦する）
-const DP_TARGETS = [3, 4, 5, 6, 7, 8, 20];
+// 依頼として計算する段数の並び（だんだん増え、最後に宝箱がある18段に挑戦する）
+const DP_TARGETS = [3, 4, 5, 6, 18];
+const CHEST_RIDDLE = '刻まれし問い：「一歩か二歩で十八段を登る道は、幾通りありや」';
 
 function buildDPStagePhase(phaseIdx) {
   return {
@@ -955,6 +956,13 @@ function renderDPVisual(container, state) {
   const rt = state.stageRuntime;
   container.innerHTML = '';
   const target = DP_TARGETS[Math.min(rt.roundIdx, DP_TARGETS.length - 1)];
+  const isFinalTarget = target === DP_TARGETS[DP_TARGETS.length - 1];
+
+  const riddle = document.createElement('div');
+  riddle.className = 'chest-riddle';
+  riddle.textContent = CHEST_RIDDLE;
+  container.appendChild(riddle);
+
   const info = document.createElement('div');
   info.className = 'stage-info';
   info.textContent = `モード: ${rt.mode === 'memo' ? 'メモ化あり' : 'メモ化なし'} / 今回の依頼: ${target}段 / 合計クリック数: ${rt.totalClicks}回`;
@@ -963,7 +971,7 @@ function renderDPVisual(container, state) {
   const live = document.createElement('div');
   live.className = 'live-desc';
   if (rt.cleared) {
-    live.textContent = '全ての依頼が完了しました！';
+    live.textContent = rt.phaseIdx === 1 ? '答えを確かめて、宝箱の鍵を開けよう！' : '全ての依頼が完了しました！';
   } else {
     const n = nextUnknownStep(rt.table);
     if (n > target) {
@@ -978,12 +986,17 @@ function renderDPVisual(container, state) {
 
   const stairs = document.createElement('div');
   stairs.className = 'stair-visual';
-  for (let s = 1; s <= Math.min(target, 12); s += 1) {
+  for (let s = 1; s <= target; s += 1) {
     const step = document.createElement('div');
     step.className = 'stair-step';
     if (rt.table[s] !== undefined) step.classList.add('done');
-    step.style.height = `${s * 8}px`;
+    step.style.height = `${s * 7}px`;
     stairs.appendChild(step);
+  }
+  if (isFinalTarget) {
+    const chest = document.createElement('div');
+    chest.className = 'chest-icon';
+    stairs.appendChild(chest);
   }
   container.appendChild(stairs);
 
@@ -1000,10 +1013,13 @@ function renderDPVisual(container, state) {
 function renderDPActions(container, state, api) {
   const rt = state.stageRuntime;
   if (rt.cleared) {
-    const isLast = rt.phaseIdx >= 1;
+    if (rt.phaseIdx >= 1) {
+      renderChestUnlock(container, state, api);
+      return;
+    }
     const next = document.createElement('button');
     next.className = 'primary';
-    next.textContent = isLast ? 'ステージクリア！' : '次の依頼へ（メモ化ありで挑戦）';
+    next.textContent = '次の依頼へ（メモ化ありで挑戦）';
     next.addEventListener('click', () => advanceDPPhase(state, api));
     container.appendChild(next);
     return;
@@ -1014,12 +1030,43 @@ function renderDPActions(container, state, api) {
   container.appendChild(btn);
 }
 
+function renderChestUnlock(container, state, api) {
+  const rt = state.stageRuntime;
+  const target = DP_TARGETS[DP_TARGETS.length - 1];
+  const wrap = document.createElement('div');
+  wrap.className = 'chest-unlock';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.inputMode = 'numeric';
+  input.placeholder = '暗証番号を入力';
+  input.className = 'chest-unlock-input';
+  const btn = document.createElement('button');
+  btn.className = 'primary';
+  btn.textContent = '開錠する';
+  btn.addEventListener('click', () => {
+    const answer = String(rt.table[target]);
+    if (input.value.trim() === answer) {
+      api.log(`暗証番号「${answer}」…カチリと鍵が開いた！`, 'ok');
+      advanceDPPhase(state, api);
+    } else {
+      api.log('暗証番号が違うようだ…計算結果をもう一度確認しよう。', 'err');
+      input.value = '';
+      input.focus();
+    }
+  });
+  input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') btn.click(); });
+  wrap.appendChild(input);
+  wrap.appendChild(btn);
+  container.appendChild(wrap);
+}
+
 const STAGE_DP = {
   navLabel: '⑥動的計画法',
-  title: '第6章 宝箱の階段 ― 動的計画法 ―',
-  missionText: '階段の上り方(1歩か2歩)が何通りあるか、1段目から順に数えていこう。1段なら1通り、2段なら2通り…同じ計算をやり直していないか確認しよう。',
+  title: '第6章 宝箱の暗証番号 ― 動的計画法 ―',
+  missionText: '18段の階段の上り方(1歩か2歩)が何通りあるか、1段目から順に数えていこう。宝箱の蓋に刻まれた問いの答えが、鍵を開く暗証番号になる。',
   dialogue: [
-    { who: '王', text: '宝箱までの階段の上り方が何通りあるか知りたい。1歩か2歩ずつ進めるとして数えてくれ。' },
+    { who: '王', text: '階段のてっぺんで宝箱を見つけたのだが、蓋に古代文字で何か刻まれている。読めるか？' },
+    { who: 'あなた', text: '……『一歩か二歩で十八段を登る道は、幾通りありや』と刻まれていますね。これが鍵の暗証番号を解く問いのようです。' },
     { who: 'あなた', text: '1段なら1通り、2段なら「1+1」か「2」の2通り。3段目からは、1段前と2段前の答えを足せば求まりますね。' },
     { who: 'あなた', text: 'でも毎回1段目からやり直していたら、大きい段数では大変です。一度計算した数字を覚えておきましょう。' },
   ],
