@@ -74,7 +74,7 @@ const BOOK_RECOMMEND = {
   cover: 'https://m.media-amazon.com/images/I/41lM1rzG12L._SY385_.jpg',
 };
 
-export function renderBookRecommend(lead) {
+export function renderBookRecommend() {
   const el = document.getElementById('book-recommend');
   el.innerHTML = `
     <p class="book-recommend-label">参考文献</p>
@@ -83,7 +83,7 @@ export function renderBookRecommend(lead) {
         <img src="${BOOK_RECOMMEND.cover}" alt="${escapeHtml(BOOK_RECOMMEND.title)}" class="book-recommend-cover">
       </a>
       <div>
-        <p class="book-recommend-lead">${escapeHtml(lead)}</p>
+        <p class="book-recommend-lead">もっと深く学びたい方へ</p>
         <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
       </div>
     </div>
