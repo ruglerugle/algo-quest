@@ -46,6 +46,9 @@ body {
 #app-header h1 { margin: 0; font-size: 22px; color: var(--gold); font-weight: 900; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); overflow-wrap: break-word; }
 #app-header .subtitle { font-size: 13px; color: #fdf3da; font-weight: 700; margin-left: 6px; }
 
+#home-link { margin-left: auto; font-size: 13px; font-weight: 700; color: #fdf3da; text-decoration: none; background: rgba(255, 255, 255, 0.10); border: 1px solid rgba(255, 255, 255, 0.3); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+#home-link:hover { background: rgba(255, 255, 255, 0.2); }
+
 #stage-nav { display: flex; gap: 6px; flex-wrap: wrap; }
 
 #stage-nav button {
