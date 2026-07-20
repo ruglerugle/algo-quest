@@ -184,50 +184,77 @@ body {
 
 .main-area { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 
-#dialogue-panel { display: flex; flex-direction: column; gap: 10px; }
-.dialogue-line {
+#dialogue-panel:empty { display: none; }
+
+/* ── 会話システム（互い違い・全幅、net-quest/oop-gameと共通構造） ── */
+.dialog-scene {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.dialog-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
   gap: 12px;
-  max-width: 640px;
-  padding: 10px 14px;
-  background: var(--parchment-2);
+  align-items: stretch;
   border: 1px solid var(--border);
+  background: var(--parchment-2);
   border-radius: 10px;
+  padding: 10px 12px;
   box-shadow: var(--shadow);
 }
-.speaker-frame {
+.dialog-row.right {
+  grid-template-columns: minmax(0, 1fr) 110px;
+}
+.dialog-row.right .dialog-character { order: 2; }
+.dialog-row.right .dialog-bubble { order: 1; }
+.dialog-character {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-.speaker-icon {
-  width: 56px;
-  height: auto;
-  border-radius: 8px;
-}
-.speaker-name-tag {
-  font-size: 11px;
-  font-weight: 900;
-  color: #fdf3da;
-  background: var(--wood);
-  padding: 1px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-.dialogue-bubble {
-  position: relative;
-  margin: 0;
-  padding: 10px 14px;
-  background: var(--parchment);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  flex: 1;
+  justify-content: center;
+  align-self: center;
   min-width: 0;
 }
-.dialogue-bubble::before {
+.dialog-character img {
+  width: 64px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .3));
+}
+.dialog-name {
+  margin-top: -2px;
+  padding: 3px 10px;
+  border-radius: 7px;
+  color: #fdf3da;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .3);
+  white-space: nowrap;
+}
+.dialog-name.npc { background: linear-gradient(var(--wood-2), var(--wood)); }
+.dialog-name.you { background: linear-gradient(#e7c873, var(--gold)); color: #2c1d0e; }
+.dialog-bubble {
+  position: relative;
+  align-self: center;
+  background: var(--parchment);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.8;
+  font-weight: 700;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.dialog-bubble::before {
   content: '';
   position: absolute;
   left: -10px;
@@ -237,7 +264,7 @@ body {
   border-bottom: 8px solid transparent;
   border-right: 10px solid var(--border);
 }
-.dialogue-bubble::after {
+.dialog-bubble::after {
   content: '';
   position: absolute;
   left: -8px;
@@ -246,6 +273,25 @@ body {
   border-top: 7px solid transparent;
   border-bottom: 7px solid transparent;
   border-right: 9px solid var(--parchment);
+}
+.dialog-row.right .dialog-bubble::before {
+  left: auto; right: -10px;
+  border-right: 0;
+  border-left: 10px solid var(--border);
+}
+.dialog-row.right .dialog-bubble::after {
+  left: auto; right: -8px;
+  border-right: 0;
+  border-left: 9px solid var(--parchment);
+}
+
+@media (max-width: 700px) {
+  .dialog-row, .dialog-row.right { grid-template-columns: 74px minmax(0, 1fr); padding: 8px; gap: 8px; }
+  .dialog-row.right .dialog-character { order: 0; }
+  .dialog-row.right .dialog-bubble { order: 1; }
+  .dialog-character img { width: 52px; }
+  .dialog-name { font-size: 10px; padding: 3px 7px; }
+  .dialog-bubble { font-size: 13px; padding: 9px 11px; min-height: 0; }
 }
 
 #mission-banner {

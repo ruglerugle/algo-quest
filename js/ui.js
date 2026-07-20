@@ -45,17 +45,21 @@ const SPEAKER_ICONS = {
   あなた: 'images/you.png',
 };
 
+function dialogueRow(who, text) {
+  const icon = SPEAKER_ICONS[who];
+  const isYou = who === 'あなた';
+  const side = isYou ? ' right' : '';
+  const frameHtml = icon
+    ? `<div class="dialog-character"><img src="${icon}" alt="${escapeHtml(who)}"><div class="dialog-name ${isYou ? 'you' : 'npc'}">${escapeHtml(who)}</div></div>`
+    : '';
+  return `<div class="dialog-row${side}">${frameHtml}<div class="dialog-bubble">${escapeHtml(text)}</div></div>`;
+}
+
 export function renderDialogue(stageDef) {
   const box = document.getElementById('dialogue-panel');
   const lines = stageDef.dialogue ?? [];
   box.innerHTML = lines.length
-    ? lines.map((l) => {
-        const icon = SPEAKER_ICONS[l.who];
-        const frameHtml = icon
-          ? `<div class="speaker-frame"><img src="${icon}" alt="${escapeHtml(l.who)}" class="speaker-icon"><span class="speaker-name-tag">${escapeHtml(l.who)}</span></div>`
-          : '';
-        return `<div class="dialogue-line">${frameHtml}<p class="dialogue-bubble">${escapeHtml(l.text)}</p></div>`;
-      }).join('')
+    ? `<div class="dialog-scene">${lines.map((l) => dialogueRow(l.who, l.text)).join('')}</div>`
     : '';
 }
 
