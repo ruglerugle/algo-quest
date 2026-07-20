@@ -292,6 +292,17 @@ body {
   .dialog-character img { width: 52px; }
   .dialog-name { font-size: 10px; padding: 3px 7px; }
   .dialog-bubble { font-size: 13px; padding: 9px 11px; min-height: 0; }
+  /* アバターは常に左側に寄せるため、吹き出しの三角形も左向きに揃える */
+  .dialog-row.right .dialog-bubble::before {
+    left: -10px; right: auto;
+    border-right: 10px solid var(--border);
+    border-left: 0;
+  }
+  .dialog-row.right .dialog-bubble::after {
+    left: -8px; right: auto;
+    border-right: 9px solid var(--parchment);
+    border-left: 0;
+  }
 }
 
 #mission-banner {
