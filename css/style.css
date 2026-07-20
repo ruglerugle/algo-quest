@@ -46,8 +46,18 @@ body {
 #app-header h1 { margin: 0; font-size: 22px; color: var(--gold); font-weight: 900; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4); overflow-wrap: break-word; }
 #app-header .subtitle { font-size: 13px; color: #fdf3da; font-weight: 700; margin-left: 6px; }
 
-#home-link { margin-left: auto; font-size: 13px; font-weight: 700; color: #fdf3da; text-decoration: none; background: rgba(255, 255, 255, 0.10); border: 1px solid rgba(255, 255, 255, 0.3); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
-#home-link:hover { background: rgba(255, 255, 255, 0.2); }
+#home-link {
+  margin-left: auto; flex-shrink: 0;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; text-decoration: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(202, 162, 58, .5), #2c1d0e 75%);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), 0 0 10px -2px var(--gold);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+#home-link:hover { transform: translateY(-2px) scale(1.07); box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), 0 0 16px 0 var(--gold); }
 
 #stage-nav { display: flex; gap: 6px; flex-wrap: wrap; }
 
