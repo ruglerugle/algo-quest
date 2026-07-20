@@ -3,11 +3,37 @@
 export function renderStageNav(stages, state, onSelect) {
   const nav = document.getElementById('stage-nav');
   nav.innerHTML = '';
+
+  const clearedCount = Math.max(0, state.unlockedCount - 1);
+  const progressLabel = document.getElementById('progress-label');
+  const progressFill = document.getElementById('progress-fill');
+  if (progressLabel) progressLabel.textContent = `クリア ${clearedCount} / ${stages.length}`;
+  if (progressFill) progressFill.style.width = `${(clearedCount / stages.length) * 100}%`;
+
   stages.forEach((s, i) => {
+    const done = i < state.unlockedCount - 1;
+    const locked = i > state.unlockedCount - 1;
+    const active = i === state.stageIndex;
+
     const btn = document.createElement('button');
-    btn.textContent = s.navLabel;
-    if (i === state.stageIndex) btn.classList.add('active');
-    if (i > state.unlockedCount - 1) btn.disabled = true;
+    btn.className = `side-step${active ? ' active' : ''}${done ? ' done' : ''}${locked ? ' locked' : ''}`;
+    btn.disabled = locked;
+
+    const paw = document.createElement('span');
+    paw.className = 'paw';
+    paw.textContent = '📦';
+    btn.appendChild(paw);
+
+    const label = document.createElement('span');
+    label.className = 'side-step-label';
+    label.textContent = s.navLabel;
+    btn.appendChild(label);
+
+    const status = document.createElement('span');
+    status.className = 'status-icon';
+    status.textContent = done ? '✅' : locked ? '🔒' : '';
+    btn.appendChild(status);
+
     btn.addEventListener('click', () => onSelect(i));
     nav.appendChild(btn);
   });

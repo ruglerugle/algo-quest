@@ -73,6 +73,15 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   loadStage(gameState.stageIndex);
 });
 
+function toggleSidebar() {
+  document.getElementById('app-shell').classList.toggle('side-collapsed');
+}
+document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+document.getElementById('head-nav-toggle').addEventListener('click', toggleSidebar);
+document.getElementById('side-backdrop').addEventListener('click', () => {
+  document.getElementById('app-shell').classList.add('side-collapsed');
+});
+
 let lastTick = performance.now();
 setInterval(() => {
   const now = performance.now();
