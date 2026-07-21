@@ -38,6 +38,12 @@ const API = {
     gameState.unlockedCount = Math.max(gameState.unlockedCount, gameState.stageIndex + 2);
     ui.renderStageNav(STAGES, gameState, loadStage);
   },
+  goToNextStage() {
+    const nextIndex = gameState.stageIndex + 1;
+    if (nextIndex < STAGES.length && nextIndex <= gameState.unlockedCount - 1) {
+      loadStage(nextIndex);
+    }
+  },
 };
 
 function loadStage(index) {

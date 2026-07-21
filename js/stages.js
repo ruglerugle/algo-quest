@@ -67,8 +67,7 @@ function advanceLinearPhase(state, api) {
   const nextIdx = rt.phaseIdx + 1;
   if (nextIdx >= LINEAR_PHASES.length) {
     api.completeStage();
-    api.log('お見事！これだけの人数を毎回手作業で探すのは限界です。次は「並べ替え」と「半分に絞り込む」技を身につけましょう。', 'ok');
-    api.render();
+    api.goToNextStage();
     return;
   }
   state.playing = false;
@@ -214,6 +213,7 @@ function doBinaryCheck(state, api) {
   } else if (result.found) {
     const v = rt.villagers[result.mid];
     api.log(`中央「${v.name}」…一致！発見しました！（比較${rt.binary.operations}回）`, 'ok');
+    api.log(`二分探索なら${rt.binary.operations}回で発見できました。同じ${rt.villagers.length.toLocaleString()}人を線形探索すると平均${rt.linearEquivalent.toLocaleString()}回かかります。半分ずつ捨てる力、体感できましたね。`, 'ok');
     api.setStatus(`発見！比較回数 ${rt.binary.operations}回`, 'ok');
   } else {
     const v = rt.villagers[result.mid];
@@ -273,8 +273,7 @@ function renderBinaryActions(container, state, api) {
     clearBtn.textContent = '次のステージへ';
     clearBtn.addEventListener('click', () => {
       api.completeStage();
-      api.log(`二分探索なら${b.operations}回で発見できました。同じ${rt.villagers.length.toLocaleString()}人を線形探索すると平均${rt.linearEquivalent.toLocaleString()}回かかります。半分ずつ捨てる力、体感できましたね。`, 'ok');
-      api.render();
+      api.goToNextStage();
     });
     container.appendChild(clearBtn);
   }
@@ -380,8 +379,7 @@ function advanceBubblePhase(state, api) {
   const nextIdx = rt.phaseIdx + 1;
   if (nextIdx >= BUBBLE_PHASES.length) {
     api.completeStage();
-    api.log('お疲れさまでした。荷物がもっと増えると腕がもちません…次はもっと速い「クイックソート」を身につけましょう。', 'ok');
-    api.render();
+    api.goToNextStage();
     return;
   }
   state.stageRuntime = buildBubblePhase(nextIdx);
@@ -585,8 +583,7 @@ function renderQuickActions(container, state, api) {
     next.textContent = '次のステージへ';
     next.addEventListener('click', () => {
       api.completeStage();
-      api.log('並べ替えの技はここまで。次は王国マップで最短経路を探しましょう。', 'ok');
-      api.render();
+      api.goToNextStage();
     });
     container.appendChild(next);
   } else {
@@ -747,6 +744,10 @@ function doDijkstraStep(state, api) {
     rt.cleared = true;
     rt.goalId = bestId;
     api.setStatus(`到着！最短${rt.dist[bestId]}分`, 'ok');
+    const harborDirect = findKingdomEdge('capital', 'harbor').weight + findKingdomEdge('harbor', 'goal').weight;
+    const mountainDirect = findKingdomEdge('capital', 'mountain').weight + findKingdomEdge('mountain', 'goal').weight;
+    api.log(`一直線に近い「海路」経由だと${harborDirect}分、「山道」経由だと${mountainDirect}分もかかります。見つけた道は${rt.dist[bestId]}分で、実はどちらより速いのです。`, 'ok');
+    api.log('道ごとの時間を考えながら「今一番近い場所」から確定させていく…これがダイクストラ法のすごさです。', 'ok');
     state.playing = false;
   } else {
     kingdomNeighbors(bestId).forEach((e) => {
@@ -845,11 +846,7 @@ function renderDijkstraActions(container, state, api) {
     next.textContent = '次のステージへ';
     next.addEventListener('click', () => {
       api.completeStage();
-      const harborDirect = findKingdomEdge('capital', 'harbor').weight + findKingdomEdge('harbor', 'goal').weight;
-      const mountainDirect = findKingdomEdge('capital', 'mountain').weight + findKingdomEdge('mountain', 'goal').weight;
-      api.log(`一直線に近い「海路」経由だと${harborDirect}分、「山道」経由だと${mountainDirect}分もかかります。見つけた道は${rt.dist[rt.goalId]}分で、実はどちらより速いのです。`, 'ok');
-      api.log('道ごとの時間を考えながら「今一番近い場所」から確定させていく…これがダイクストラ法のすごさです。', 'ok');
-      api.render();
+      api.goToNextStage();
     });
     container.appendChild(next);
     return;
