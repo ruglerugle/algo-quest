@@ -160,7 +160,7 @@ function renderLinearActions(container, state, api) {
     const next = document.createElement('button');
     const isLast = rt.phaseIdx >= LINEAR_PHASES.length - 1;
     next.className = 'primary';
-    next.textContent = isLast ? 'ステージクリア！' : `次の依頼へ（村人${LINEAR_PHASES[rt.phaseIdx + 1].n.toLocaleString()}人）`;
+    next.textContent = isLast ? '次のステージへ' : `次の依頼へ（村人${LINEAR_PHASES[rt.phaseIdx + 1].n.toLocaleString()}人）`;
     next.addEventListener('click', () => advanceLinearPhase(state, api));
     container.appendChild(next);
   }
@@ -270,7 +270,7 @@ function renderBinaryActions(container, state, api) {
   } else if (b.found) {
     const clearBtn = document.createElement('button');
     clearBtn.className = 'primary';
-    clearBtn.textContent = 'ステージクリア！';
+    clearBtn.textContent = '次のステージへ';
     clearBtn.addEventListener('click', () => {
       api.completeStage();
       api.log(`二分探索なら${b.operations}回で発見できました。同じ${rt.villagers.length.toLocaleString()}人を線形探索すると平均${rt.linearEquivalent.toLocaleString()}回かかります。半分ずつ捨てる力、体感できましたね。`, 'ok');
@@ -419,7 +419,7 @@ function renderBubbleActions(container, state, api) {
     const next = document.createElement('button');
     next.className = 'primary';
     const isLast = rt.phaseIdx >= BUBBLE_PHASES.length - 1;
-    next.textContent = isLast ? 'ステージクリア！' : `次の依頼へ（荷物${BUBBLE_PHASES[rt.phaseIdx + 1].n}個）`;
+    next.textContent = isLast ? '次のステージへ' : `次の依頼へ（荷物${BUBBLE_PHASES[rt.phaseIdx + 1].n}個）`;
     next.addEventListener('click', () => advanceBubblePhase(state, api));
     container.appendChild(next);
   }
@@ -582,7 +582,7 @@ function renderQuickActions(container, state, api) {
   if (q.done) {
     const next = document.createElement('button');
     next.className = 'primary';
-    next.textContent = 'ステージクリア！';
+    next.textContent = '次のステージへ';
     next.addEventListener('click', () => {
       api.completeStage();
       api.log('並べ替えの技はここまで。次は王国マップで最短経路を探しましょう。', 'ok');
@@ -842,7 +842,7 @@ function renderDijkstraActions(container, state, api) {
   if (rt.cleared) {
     const next = document.createElement('button');
     next.className = 'primary';
-    next.textContent = 'ステージクリア！';
+    next.textContent = '次のステージへ';
     next.addEventListener('click', () => {
       api.completeStage();
       const harborDirect = findKingdomEdge('capital', 'harbor').weight + findKingdomEdge('harbor', 'goal').weight;
