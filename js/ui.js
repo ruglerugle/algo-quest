@@ -40,9 +40,9 @@ export function renderStageNav(stages, state, onSelect) {
 }
 
 const SPEAKER_ICONS = {
-  村長: 'images/soncho.png',
-  王: 'images/king.png',
-  あなた: 'images/you.png',
+  村長: '/images/soncho.png',
+  王: '/images/king.png',
+  あなた: '/images/you.png',
 };
 
 function dialogueRow(who, text) {
