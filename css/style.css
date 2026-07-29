@@ -224,6 +224,8 @@ body {
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .3));
+  position: relative;
+  z-index: 1;
 }
 .dialog-name {
   margin-top: -2px;
@@ -234,6 +236,8 @@ body {
   font-size: 12px;
   line-height: 1.2;
   box-shadow: 0 2px 0 rgba(0, 0, 0, .3);
+  position: relative;
+  z-index: 2;
   white-space: nowrap;
 }
 .dialog-name.npc { background: linear-gradient(var(--wood-2), var(--wood)); }
