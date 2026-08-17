@@ -12,9 +12,39 @@ const gameState = {
   completed: false,
 };
 
+// 進捗の保存（localStorageが使えない環境では保存せずに動作する）
+const STORAGE_KEY = 'algo-quest-progress';
+
+function loadProgress() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!data || typeof data.unlockedCount !== 'number' || typeof data.stageIndex !== 'number') return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress() {
+  if (devUnlockAll) return; // 検証用アンロックは保存しない
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      unlockedCount: gameState.unlockedCount,
+      stageIndex: gameState.stageIndex,
+    }));
+  } catch {
+    // プライベートモード等で保存できない場合は今回のセッション内のみ有効
+  }
+}
+
 // 検証用: URLに ?all を付けると全ステージのロックを解除する（例: index.html?all）
-if (new URLSearchParams(location.search).has('all')) {
+const devUnlockAll = new URLSearchParams(location.search).has('all');
+const savedProgress = devUnlockAll ? null : loadProgress();
+if (devUnlockAll) {
   gameState.unlockedCount = STAGES.length;
+} else if (savedProgress) {
+  // 全ステージクリア時は unlockedCount が STAGES.length + 1 になる
+  gameState.unlockedCount = Math.min(Math.max(savedProgress.unlockedCount, 1), STAGES.length + 1);
 }
 
 const visualEl = document.getElementById('visual-stage');
@@ -36,6 +66,7 @@ const API = {
     if (gameState.completed) return;
     gameState.completed = true;
     gameState.unlockedCount = Math.max(gameState.unlockedCount, gameState.stageIndex + 2);
+    saveProgress();
     ui.renderStageNav(STAGES, gameState, loadStage);
   },
   goToNextStage() {
@@ -45,6 +76,7 @@ const API = {
     } else if (nextIndex >= STAGES.length && gameState.completed) {
       ui.renderEnding(() => {
         gameState.unlockedCount = 1;
+        saveProgress();
         loadStage(0);
       });
     }
@@ -62,6 +94,7 @@ function loadStage(index) {
   gameState.stageRuntime = built.runtime;
   gameState.playing = false;
   gameState.completed = false;
+  saveProgress();
 
   ui.clearLog();
   ui.renderCompareBox('');
@@ -104,4 +137,8 @@ setInterval(() => {
   }
 }, 16);
 
-loadStage(0);
+// 前回の続きから再開（保存が無ければ第1章から）
+const initialStage = savedProgress
+  ? Math.max(0, Math.min(savedProgress.stageIndex, gameState.unlockedCount - 1, STAGES.length - 1))
+  : 0;
+loadStage(initialStage);
