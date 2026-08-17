@@ -165,7 +165,7 @@ export function renderEnding(onReplay) {
       <p class="ending-note">同じ問題でも、アルゴリズムの選び方で手数は桁違いに変わる。計算量（O記法）は、その差を見積もる物差しです。下の参考書は、今日体験したことを理屈から支えてくれます。</p>
       <div class="ending-actions">
         <button type="button" id="ending-replay">↺ はじめから遊びなおす</button>
-        <a class="share" href="https://x.com/intent/post?text=${encodeURIComponent('ALGO QUEST 全章クリア！🎉 探索・ソート・最短経路・動的計画法をゲームで学べる無料アルゴリズム学習ゲーム')}&url=${encodeURIComponent('https://informatics.habatakijuku.com/algo-quest/')}" target="_blank" rel="noopener">𝕏 クリアを報告する</a>
+        <a class="share" href="https://x.com/intent/post?text=${encodeURIComponent('アルゴリズムクエスト 全章クリア！🎉 探索・ソート・最短経路・動的計画法をゲームで学べる無料アルゴリズム学習ゲーム')}&url=${encodeURIComponent('https://informatics.habatakijuku.com/algo-quest/')}" target="_blank" rel="noopener">𝕏 クリアを報告する</a>
         <a href="/">🧭 他のクエストも遊ぶ</a>
       </div>
     </div>
