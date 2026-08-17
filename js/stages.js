@@ -34,7 +34,7 @@ const LINEAR_PHASE2_DIALOGUE = [
   { who: '村長', text: 'さすがです！…実は隣町からも捜索の相談が来ていまして。あちらは住民1万人なのですが、同じやり方で大丈夫でしょうか？' },
   { who: 'あなた', text: '正直、つらいですね。この探し方は人数が100倍になれば、確認の回数もそのまま100倍。1万人なら最悪1万回の確認です。' },
   { who: '村長', text: '1万回…手作業では日が暮れてしまいます。' },
-  { who: 'あなた', text: 'ここは機械に任せて一気に確認しましょう。ただ、人数に比例して遅くなる弱点そのものは消えません。名簿がきちんと並んでいれば、もっと賢い探し方があるんです。それは次の章で。' },
+  { who: 'あなた', text: 'ここは機械に任せて一気に確認しましょう。ただ、人数に比例して遅くなる弱点そのものは消えません。…名簿がきちんと並んでさえいれば、もっと賢い探し方があるのですが。' },
 ];
 
 function buildLinearPhase(phaseIdx) {
@@ -80,6 +80,7 @@ function advanceLinearPhase(state, api) {
   state.stageRuntime = buildLinearPhase(nextIdx);
   api.setStatus('', '');
   renderDialogue({ dialogue: LINEAR_PHASE2_DIALOGUE });
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // 更新された会話が目に入るように
   api.log(`依頼：隣町の住民${LINEAR_PHASES[nextIdx].n.toLocaleString()}人の中から${state.stageRuntime.target}さんを探してください。`);
   api.refreshActions();
   api.render();

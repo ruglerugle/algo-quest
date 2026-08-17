@@ -104,6 +104,7 @@ function loadStage(index) {
   ui.renderStageActions(actionsEl, def, gameState, API);
   ui.renderBookRecommend();
   render();
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // 新しいステージの会話が目に入るように
 }
 
 document.getElementById('btn-play').addEventListener('click', () => { gameState.playing = true; });
