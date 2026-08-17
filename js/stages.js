@@ -6,7 +6,7 @@ import {
   createBubbleRuntime, bubbleStep,
   computeQuickSortEvents,
 } from './algorithms.js';
-import { escapeHtml } from './ui.js';
+import { escapeHtml, renderDialogue } from './ui.js';
 
 /** 一定間隔(秒)ごとにstepFnを1回呼ぶ、再生/一時停止共通の自動進行ヘルパー */
 function tickAtInterval(state, dt, speed, api, intervalSeconds, isDone, stepFn) {
@@ -26,9 +26,15 @@ function tickAtInterval(state, dt, speed, api, intervalSeconds, isDone, stepFn) 
 
 const LINEAR_PHASES = [
   { n: 100, mode: 'grid' },
-  { n: 1000, mode: 'grid' },
   { n: 10000, mode: 'auto' },
-  { n: 100000, mode: 'auto' },
+];
+
+// 2件目の依頼(1万人)に移るときの会話。線形探索の弱点をここで指摘する
+const LINEAR_PHASE2_DIALOGUE = [
+  { who: '村長', text: 'さすがです！…実は隣町からも捜索の相談が来ていまして。あちらは住民1万人なのですが、同じやり方で大丈夫でしょうか？' },
+  { who: 'あなた', text: '正直、つらいですね。この探し方は人数が100倍になれば、確認の回数もそのまま100倍。1万人なら最悪1万回の確認です。' },
+  { who: '村長', text: '1万回…手作業では日が暮れてしまいます。' },
+  { who: 'あなた', text: 'ここは機械に任せて一気に確認しましょう。ただ、人数に比例して遅くなる弱点そのものは消えません。名簿がきちんと並んでいれば、もっと賢い探し方があるんです。それは次の章で。' },
 ];
 
 function buildLinearPhase(phaseIdx) {
@@ -72,7 +78,9 @@ function advanceLinearPhase(state, api) {
   }
   state.playing = false;
   state.stageRuntime = buildLinearPhase(nextIdx);
-  api.log(`依頼：村人${LINEAR_PHASES[nextIdx].n.toLocaleString()}人の中から${state.stageRuntime.target}さんを探してください。`);
+  api.setStatus('', '');
+  renderDialogue({ dialogue: LINEAR_PHASE2_DIALOGUE });
+  api.log(`依頼：隣町の住民${LINEAR_PHASES[nextIdx].n.toLocaleString()}人の中から${state.stageRuntime.target}さんを探してください。`);
   api.refreshActions();
   api.render();
 }
