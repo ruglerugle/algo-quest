@@ -6,7 +6,7 @@ import {
   createBubbleRuntime, bubbleStep,
   computeQuickSortEvents,
 } from './algorithms.js';
-import { escapeHtml, renderDialogue } from './ui.js';
+import { escapeHtml, renderDialogue, renderCompareBox } from './ui.js';
 
 /** 一定間隔(秒)ごとにstepFnを1回呼ぶ、再生/一時停止共通の自動進行ヘルパー */
 function tickAtInterval(state, dt, speed, api, intervalSeconds, isDone, stepFn) {
@@ -227,6 +227,22 @@ function buildBinaryRuntime() {
   };
 }
 
+// 発見時に線形探索との差を人数別の表で見せる（この章の核心）
+function renderComparePanel() {
+  const rows = [100, 10000, 1000000, 100000000].map((n) => {
+    const bin = Math.ceil(Math.log2(n));
+    return `<tr><td>${n.toLocaleString()}人</td><td>${n.toLocaleString()}回</td><td class="win">${bin}回</td></tr>`;
+  }).join('');
+  renderCompareBox(`
+    <h3>⚖ どれだけ違う？ 線形探索 vs 二分探索（最悪の比較回数）</h3>
+    <table class="compare-table">
+      <tr><th>人数</th><th>線形探索 O(N)</th><th>二分探索 O(log N)</th></tr>
+      ${rows}
+    </table>
+    <p class="compare-note">人数が100人から1億人（100万倍）に増えても、二分探索は7回→27回に増えるだけ。この伸び方の違いこそが、計算量（O記法）が表しているものです。</p>
+  `);
+}
+
 function doBinaryCheck(state, api) {
   const rt = state.stageRuntime;
   const result = binaryStep(rt.binary);
@@ -238,6 +254,7 @@ function doBinaryCheck(state, api) {
     api.log(`中央「${v.name}」…一致！発見しました！（比較${rt.binary.operations}回）`, 'ok');
     api.log(`二分探索なら${rt.binary.operations}回で発見できました。同じ${rt.villagers.length.toLocaleString()}人を線形探索すると平均${rt.linearEquivalent.toLocaleString()}回かかります。半分ずつ捨てる力、体感できましたね。`, 'ok');
     api.setStatus(`発見！比較回数 ${rt.binary.operations}回`, 'ok');
+    renderComparePanel();
   } else {
     const v = rt.villagers[result.mid];
     if (result.cmp < 0) {

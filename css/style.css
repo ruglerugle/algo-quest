@@ -792,3 +792,13 @@ body {
   cursor: pointer;
   font-family: inherit;
 }
+
+/* ===== 計算量比較パネル ===== */
+#compare-box:empty { display: none; }
+#compare-box h3 { margin: 0 0 8px; font-size: 13px; color: var(--wood); }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.compare-table th, .compare-table td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+.compare-table th { color: var(--wood); font-size: 12px; }
+.compare-table th:first-child, .compare-table td:first-child { text-align: left; }
+.compare-table .win { color: var(--info); font-weight: 900; }
+.compare-note { margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.7; }
