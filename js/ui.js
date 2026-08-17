@@ -107,7 +107,7 @@ const BOOK_RECOMMEND = {
 export function renderBookRecommend() {
   const el = document.getElementById('book-recommend');
   el.innerHTML = `
-    <p class="book-recommend-label">参考文献</p>
+    <p class="book-recommend-label">参考文献［PR］</p>
     <div class="book-recommend-body">
       <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">
         <img src="${BOOK_RECOMMEND.cover}" alt="${escapeHtml(BOOK_RECOMMEND.title)}" class="book-recommend-cover">
@@ -117,6 +117,7 @@ export function renderBookRecommend() {
         <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
       </div>
     </div>
+    <p class="pr-disclosure" style="font-size:10.5px;color:#8a8577;margin:8px 0 0;font-weight:600;line-height:1.5">※ Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています。</p>
   `;
 }
 
