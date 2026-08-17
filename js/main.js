@@ -64,6 +64,16 @@ const API = {
   setStatus(text, cls) { ui.setMissionStatus(text, cls); },
   completeStage() {
     if (gameState.completed) return;
+    // 章末クイズに合格するまでクリア(次ステージ解放)を保留する
+    if (gameState.stageDef.quiz && !gameState.quizPassed) {
+      ui.renderQuiz(gameState.stageDef.quiz, () => {
+        gameState.quizPassed = true;
+        ui.hideQuiz();
+        API.completeStage();
+        API.goToNextStage();
+      });
+      return;
+    }
     gameState.completed = true;
     gameState.unlockedCount = Math.max(gameState.unlockedCount, gameState.stageIndex + 2);
     saveProgress();
@@ -94,6 +104,8 @@ function loadStage(index) {
   gameState.stageRuntime = built.runtime;
   gameState.playing = false;
   gameState.completed = false;
+  gameState.quizPassed = false;
+  ui.hideQuiz();
   saveProgress();
 
   ui.clearLog();

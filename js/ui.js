@@ -165,6 +165,7 @@ export function renderEnding(onReplay) {
       <p class="ending-note">同じ問題でも、アルゴリズムの選び方で手数は桁違いに変わる。計算量（O記法）は、その差を見積もる物差しです。下の参考書は、今日体験したことを理屈から支えてくれます。</p>
       <div class="ending-actions">
         <button type="button" id="ending-replay">↺ はじめから遊びなおす</button>
+        <a class="share" href="https://x.com/intent/post?text=${encodeURIComponent('ALGO QUEST 全章クリア！🎉 探索・ソート・最短経路・動的計画法をゲームで学べる無料アルゴリズム学習ゲーム')}&url=${encodeURIComponent('https://informatics.habatakijuku.com/algo-quest/')}" target="_blank" rel="noopener">𝕏 クリアを報告する</a>
         <a href="/">🧭 他のクエストも遊ぶ</a>
       </div>
     </div>
@@ -181,4 +182,59 @@ export function hideEnding() {
   const el = document.getElementById('ending-screen');
   el.hidden = true;
   el.innerHTML = '';
+}
+
+// ===== 章末クイズ =====
+export function renderQuiz(quiz, onPass) {
+  const panel = document.getElementById('quiz-panel');
+  panel.hidden = false;
+  let idx = 0;
+
+  function renderQuestion() {
+    const item = quiz[idx];
+    panel.innerHTML = `
+      <div class="quiz-box">
+        <div class="quiz-head">📜 理解度チェック（${idx + 1} / ${quiz.length}）― 全問正解でつぎへ進めます</div>
+        <div class="quiz-q">Q${idx + 1}. ${escapeHtml(item.q)}</div>
+        <div class="quiz-choices"></div>
+        <div class="quiz-feedback"></div>
+      </div>
+    `;
+    const choicesEl = panel.querySelector('.quiz-choices');
+    const feedback = panel.querySelector('.quiz-feedback');
+    item.choices.forEach((choice, i) => {
+      const btn = document.createElement('button');
+      btn.textContent = `${'ABC'[i]}. ${choice}`;
+      btn.addEventListener('click', () => {
+        if (i !== item.correct) {
+          feedback.className = 'quiz-feedback ng';
+          feedback.textContent = '❌ 不正解。ステージで体験したことを思い出して、もう一度考えてみよう。';
+          return;
+        }
+        feedback.className = 'quiz-feedback ok';
+        feedback.textContent = `⭕ 正解！ ${item.explain}`;
+        choicesEl.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        const next = document.createElement('button');
+        next.className = 'quiz-pass';
+        if (idx + 1 < quiz.length) {
+          next.textContent = 'つぎの問題へ ▶';
+          next.addEventListener('click', () => { idx += 1; renderQuestion(); });
+        } else {
+          next.textContent = '✅ 合格！つぎへ進む';
+          next.addEventListener('click', onPass);
+        }
+        panel.querySelector('.quiz-box').appendChild(next);
+      });
+      choicesEl.appendChild(btn);
+    });
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  renderQuestion();
+}
+
+export function hideQuiz() {
+  const panel = document.getElementById('quiz-panel');
+  panel.hidden = true;
+  panel.innerHTML = '';
 }

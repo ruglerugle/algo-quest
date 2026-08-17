@@ -750,3 +750,45 @@ body {
   background: var(--gold);
   color: #241608;
 }
+#ending-screen .ending-actions a.share { border: 1px solid #222; background: #111; color: #fff; }
+
+/* ===== 章末クイズ ===== */
+#quiz-panel[hidden] { display: none; }
+.quiz-box {
+  background: var(--parchment);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+.quiz-head { font-weight: 900; color: var(--wood); margin-bottom: 10px; font-size: 15px; }
+.quiz-q { font-weight: 800; margin-bottom: 10px; }
+.quiz-choices { display: flex; flex-direction: column; gap: 8px; }
+.quiz-choices button {
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--parchment-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.quiz-choices button:hover { background: #fff; }
+.quiz-feedback { margin-top: 10px; font-weight: 800; font-size: 13.5px; line-height: 1.7; }
+.quiz-feedback.ok { color: var(--ok); }
+.quiz-feedback.ng { color: var(--danger); }
+.quiz-pass {
+  margin-top: 12px;
+  padding: 12px 22px;
+  border: 1px solid var(--wood);
+  border-radius: 10px;
+  background: var(--gold);
+  color: #241608;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+}
