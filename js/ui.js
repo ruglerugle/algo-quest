@@ -143,3 +143,42 @@ export function escapeHtml(str) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
 }
+
+// ===== 全クリアまとめ画面 =====
+export function renderEnding(onReplay) {
+  const main = document.getElementById('main-area');
+  const el = document.getElementById('ending-screen');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="ending-card">
+      <div class="ending-emoji">🎉</div>
+      <h2>全章クリア！おめでとうございます</h2>
+      <p class="ending-lead">王国の物流エンジニアとして、6つのアルゴリズムをやり遂げました。</p>
+      <div class="ending-list">
+        ✅ 第1章 線形探索 ― 端から1件ずつ確認する <span class="o">O(N)</span><br>
+        ✅ 第2章 二分探索 ― 並んだデータを半分ずつ絞り込む <span class="o">O(log N)</span><br>
+        ✅ 第3章 バブルソート ― 隣同士を比べて交換する <span class="o">O(N&sup2;)</span><br>
+        ✅ 第4章 クイックソート ― 基準で仕分けて分割統治 <span class="o">O(N log N)</span><br>
+        ✅ 第5章 ダイクストラ法 ― 距離が確定した町から最短経路を広げる<br>
+        ✅ 第6章 動的計画法 ― 一度計算した答えをメモして再利用する
+      </div>
+      <p class="ending-note">同じ問題でも、アルゴリズムの選び方で手数は桁違いに変わる。計算量（O記法）は、その差を見積もる物差しです。下の参考書は、今日体験したことを理屈から支えてくれます。</p>
+      <div class="ending-actions">
+        <button type="button" id="ending-replay">↺ はじめから遊びなおす</button>
+        <a href="/">🧭 他のクエストも遊ぶ</a>
+      </div>
+    </div>
+  `;
+  el.querySelector('#ending-replay').addEventListener('click', onReplay);
+  main.classList.add('ending-mode');
+  window.scrollTo(0, 0);
+}
+
+export function hideEnding() {
+  const main = document.getElementById('main-area');
+  if (!main.classList.contains('ending-mode')) return;
+  main.classList.remove('ending-mode');
+  const el = document.getElementById('ending-screen');
+  el.hidden = true;
+  el.innerHTML = '';
+}

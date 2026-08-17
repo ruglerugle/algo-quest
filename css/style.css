@@ -688,3 +688,65 @@ body {
   .brand-title { font-size: 18px; }
   .main-area { gap: 8px; }
 }
+
+/* ===== 全クリアまとめ画面 ===== */
+.main-area.ending-mode > *:not(#ending-screen):not(#book-recommend) { display: none !important; }
+.main-area.ending-mode > #ending-screen { display: block; }
+#ending-screen .ending-card {
+  background: var(--parchment);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 28px 26px 24px;
+  color: var(--text);
+  text-align: center;
+}
+#ending-screen .ending-emoji { font-size: 52px; line-height: 1; }
+#ending-screen h2 { margin: 10px 0 6px; font-size: 24px; color: var(--wood); }
+#ending-screen .ending-lead { margin: 0 0 18px; color: var(--text-dim); font-weight: 700; }
+#ending-screen .ending-list {
+  text-align: left;
+  background: var(--parchment-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  line-height: 2.05;
+  font-weight: 700;
+  font-size: 14.5px;
+}
+#ending-screen .ending-list .o {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  color: var(--info);
+  font-weight: 800;
+}
+#ending-screen .ending-note {
+  margin: 16px 0 18px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--gold);
+  background: rgba(202, 162, 58, 0.12);
+  text-align: left;
+  font-weight: 700;
+  border-radius: 0 8px 8px 0;
+}
+#ending-screen .ending-book { margin: 0 0 20px; text-align: left; }
+#ending-screen .ending-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+#ending-screen .ending-actions button,
+#ending-screen .ending-actions a {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+}
+#ending-screen .ending-actions button {
+  border: 1px solid var(--border);
+  background: var(--parchment-2);
+  color: var(--text);
+}
+#ending-screen .ending-actions a {
+  border: 1px solid var(--wood);
+  background: var(--gold);
+  color: #241608;
+}

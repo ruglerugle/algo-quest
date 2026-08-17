@@ -42,12 +42,18 @@ const API = {
     const nextIndex = gameState.stageIndex + 1;
     if (nextIndex < STAGES.length && nextIndex <= gameState.unlockedCount - 1) {
       loadStage(nextIndex);
+    } else if (nextIndex >= STAGES.length && gameState.completed) {
+      ui.renderEnding(() => {
+        gameState.unlockedCount = 1;
+        loadStage(0);
+      });
     }
   },
 };
 
 function loadStage(index) {
   if (index > gameState.unlockedCount - 1) return;
+  ui.hideEnding();
   const def = STAGES[index];
   const built = def.build();
 

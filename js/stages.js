@@ -950,6 +950,7 @@ function advanceDPPhase(state, api) {
   if (nextIdx >= 2) {
     api.completeStage();
     api.log(`メモ化ありなら合計${rt.totalClicks}回で済みました。一度計算した段の数字を覚えておくだけで、同じ計算をやり直さずに済みます。`, 'ok');
+    api.refreshActions();
     api.render();
     return;
   }
@@ -1020,6 +1021,14 @@ function renderDPVisual(container, state) {
 
 function renderDPActions(container, state, api) {
   const rt = state.stageRuntime;
+  if (state.completed) {
+    const finish = document.createElement('button');
+    finish.className = 'primary';
+    finish.textContent = '🎉 全章クリア！まとめを見る';
+    finish.addEventListener('click', () => api.goToNextStage());
+    container.appendChild(finish);
+    return;
+  }
   if (rt.cleared) {
     if (rt.phaseIdx >= 1) {
       renderChestUnlock(container, state, api);
