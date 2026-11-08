@@ -3,35 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>アルゴリズムクエスト ― ゲームで学ぶアルゴリズム入門（王国の物流エンジニア）</title>
-<meta name="description" content="線形探索・二分探索・バブルソート・クイックソート・ダイクストラ法・動的計画法を、王国の物流エンジニアとして体験しながら学べる無料のアルゴリズム学習ゲーム。全6章、ブラウザだけで遊べます。">
-<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="アルゴリズムクエスト">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:title" content="アルゴリズムクエスト ― ゲームで学ぶアルゴリズム入門（王国の物流エンジニア）">
-<meta property="og:description" content="探索・ソート・最短経路・動的計画法を体験しながら学べる無料のアルゴリズム学習ゲーム。">
-<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/">
-<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "LearningResource",
-  "name": "アルゴリズムクエスト ― 王国の物流エンジニア ―",
-  "alternateName": "ALGO QUEST",
-  "description": "線形探索・二分探索・バブルソート・クイックソート・ダイクストラ法・動的計画法を、王国の物流エンジニアとして体験しながら学べる無料のアルゴリズム学習ゲーム。",
-  "url": "https://informatics.habatakijuku.com/algo-quest/",
-  "inLanguage": "ja",
-  "learningResourceType": "learning activity",
-  "teaches": "アルゴリズムの基礎（線形探索・二分探索・バブルソート・クイックソート・ダイクストラ法・動的計画法・計算量）",
-  "isAccessibleForFree": true,
-  "author": { "@type": "Person", "name": "ruglerugle" }
-}
-</script>
+<meta name="theme-color" content="#3a2614">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
 <script>
@@ -40,82 +12,153 @@
   gtag('js', new Date());
   gtag('config', 'G-9RTQCP2HXM');
 </script>
-<link rel="stylesheet" href="css/style.css">
+<title>アルゴリズムクエスト ― 探す・並べる・道を探す 全9ステージの無料学習ゲーム</title>
+<meta name="description" content="同じ答えを、もっと少ない手間で出すには。線形探索と計算量（O記法）、二分探索、ハッシュ表、バブルソート、クイックソート、キューと幅優先探索、ダイクストラ法、再帰と動的計画法まで、手を動かしながら手間を数えて確かめる全9ステージの無料学習サイト。ねこ博士とうさ美が案内します。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="アルゴリズムクエスト">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="アルゴリズムクエスト ― 探す・並べる・道を探す 全9ステージの無料学習ゲーム">
+<meta property="og:description" content="同じ答えを、もっと少ない手間で。探索・ソート・最短経路・動的計画法を、手間を数えて確かめる全9ステージ。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LearningResource",
+  "name": "アルゴリズムクエスト",
+  "alternateName": "ALGO QUEST",
+  "description": "同じ答えを、もっと少ない手間で出すには。線形探索と計算量（O記法）、二分探索、ハッシュ表、バブルソート、クイックソート、キューと幅優先探索、ダイクストラ法、再帰と動的計画法まで、手を動かしながら手間を数えて確かめる全9ステージの無料学習サイト。ねこ博士とうさ美が案内します。",
+  "url": "https://informatics.habatakijuku.com/algo-quest/",
+  "inLanguage": "ja",
+  "learningResourceType": "learning activity",
+  "educationalLevel": "中学生以上",
+  "teaches": "アルゴリズムと計算量（O記法）・線形探索・二分探索・ハッシュ表・バブルソート・クイックソート・キューとスタック・幅優先探索・ダイクストラ法・優先度付きキュー・再帰・動的計画法",
+  "isAccessibleForFree": true,
+  "author": {
+    "@type": "Person",
+    "name": "ruglerugle"
+  }
+}
+</script>
 </head>
 <body>
-<div class="app-shell side-collapsed" id="app-shell">
-  <header class="game-header">
-    <div class="brand">
-      <h1 class="brand-title">アルゴリズムクエスト</h1>
-      <div class="brand-sub">― 王国の物流エンジニア ―</div>
-    </div>
-    <div class="head-progress-wrap">
-      <div class="head-progress-label" id="progress-label">クリア 0 / 6</div>
-      <div class="head-progress"><div class="head-progress-fill" id="progress-fill"></div></div>
-    </div>
-    <div class="header-actions">
-      <a id="home-link" href="/" title="クエスト集トップへ" aria-label="クエスト集トップへ">🧭</a>
-      <button id="head-nav-toggle" class="head-btn" title="ステージ一覧の表示切替">☰ ナビ</button>
+<div class="shell">
+  <nav class="topbar" aria-label="サイト情報">
+    <span class="brand-badge" aria-hidden="true">🗺️</span>
+    <span class="brand-copy">
+      <strong>アルゴリズムクエスト</strong>
+      <small>ALGORITHM QUEST</small>
+    </span>
+    <a class="head-reset" style="margin-left:auto" href="/" title="情報の冒険（シリーズの地図）へ">🧭 シリーズの地図</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <h1><span class="line">コンピュータを速くするより、</span><span class="line accent">手順を変えるほうが効く。</span></h1>
+      <p>100万人の名簿から1人を探す。前から順に調べれば最悪100万回、並んでいれば20回、名前から棚を計算すれば1回。同じ答えでも、手順しだいで手間は何万倍も変わる。手間の増え方を測る物差し「計算量」を手に入れて、<span class="nowrap">探す・並べる・道を探す・同じ計算を省く</span>、の4つの仕事で、速い手順がなぜ速いのかを、自分の手で数えて確かめよう。</p>
     </div>
   </header>
 
-  <div class="game-layout">
-    <div class="side-backdrop" id="side-backdrop"></div>
-    <aside class="side-panel" id="stage-sidebar">
-      <div class="side-head">
-        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
-        <span class="side-head-text">ステージ一覧</span>
-      </div>
-      <nav id="stage-nav" class="step-list"></nav>
-    </aside>
-
-    <main class="main-area" id="main-area">
-      <div id="dialogue-panel"></div>
-
-      <div id="mission-banner">
-        <div id="mission-title"></div>
-        <div id="mission-text"></div>
-        <div id="mission-status"></div>
+  <main>
+    <section class="board" aria-labelledby="quest-heading">
+      <div class="board-head">
+        <div><h2 id="quest-heading">クエストを選ぼう！</h2></div>
+        <p>ステージ1から順番にクリアしよう（前のステージをクリアすると次が解放されます）</p>
       </div>
 
-      <section id="stage-area">
-        <div id="visual-wrap">
-          <div id="visual-stage"></div>
-        </div>
-        <div id="stage-actions"></div>
-      </section>
+      <div class="quest-grid">
+        <a class="quest-card" href="stage1.html" data-stage="1" style="--accent:#8a5a24;--accent-bg:#f6eedd">
+          <div class="q-top"><span class="q-num">1</span><span class="q-suit" aria-hidden="true">🔍</span></div>
+          <div class="q-meta"><span class="q-tag">計算量</span><span class="q-time">⏱ 約12分</span></div>
+          <div class="q-title">線形探索と計算量</div>
+          <p class="q-desc">名簿を前から順に調べると何回比べる？ 手間の増え方で速さを測る O 記法を定義する。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
 
-      <div id="quiz-panel" hidden></div>
+        <a class="quest-card" href="stage2.html" data-stage="2" style="--accent:#2f6f8f;--accent-bg:#e8f2f7">
+          <div class="q-top"><span class="q-num">2</span><span class="q-suit" aria-hidden="true">✂️</span></div>
+          <div class="q-meta"><span class="q-tag">二分探索</span><span class="q-time">⏱ 約12分</span></div>
+          <div class="q-title">二分探索</div>
+          <p class="q-desc">並んだ名簿なら、真ん中と比べて半分を捨てられる。1000人でも10回で見つかる理由と log の意味。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
 
-      <div id="status-box">
-        <h3>装備中アルゴリズム</h3>
-        <div id="status-content"><p class="hint">ステージを開始すると表示されます</p></div>
+        <a class="quest-card" href="stage3.html" data-stage="3" style="--accent:#5b3f9a;--accent-bg:#f1ecfa">
+          <div class="q-top"><span class="q-num">3</span><span class="q-suit" aria-hidden="true">🗄️</span></div>
+          <div class="q-meta"><span class="q-tag">ハッシュ表</span><span class="q-time">⏱ 約13分</span></div>
+          <div class="q-title">ハッシュ表</div>
+          <p class="q-desc">名前から棚の番号を計算して、その棚だけを見る。衝突と負荷率、得意なことと苦手なこと。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
+
+        <a class="quest-card" href="stage4.html" data-stage="4" style="--accent:#b5504a;--accent-bg:#fdefed">
+          <div class="q-top"><span class="q-num">4</span><span class="q-suit" aria-hidden="true">🫧</span></div>
+          <div class="q-meta"><span class="q-tag">ソート</span><span class="q-time">⏱ 約12分</span></div>
+          <div class="q-title">バブルソート</div>
+          <p class="q-desc">隣どうしを比べて大きいほうを右へ。バブルソートを1手ずつ動かし、比べる回数 N(N−1)/2 を数える。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
+
+        <a class="quest-card" href="stage5.html" data-stage="5" style="--accent:#7a6a2f;--accent-bg:#f7f3e2">
+          <div class="q-top"><span class="q-num">5</span><span class="q-suit" aria-hidden="true">⚡</span></div>
+          <div class="q-meta"><span class="q-tag">分割統治</span><span class="q-time">⏱ 約14分</span></div>
+          <div class="q-title">クイックソート</div>
+          <p class="q-desc">基準より小さいか大きいかで2つに分け、それぞれを同じやり方で。平均 O(N log N) と、並んだ入力での最悪 O(N²)。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
+
+        <a class="quest-card" href="stage6.html" data-stage="6" style="--accent:#1f766e;--accent-bg:#e7f5f2">
+          <div class="q-top"><span class="q-num">6</span><span class="q-suit" aria-hidden="true">🚶</span></div>
+          <div class="q-meta"><span class="q-tag">BFS</span><span class="q-time">⏱ 約13分</span></div>
+          <div class="q-title">キューと幅優先探索</div>
+          <p class="q-desc">先に並んだものから取り出すキューで、スタートから近い順に町を調べる。最少の歩数が求まる理由。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
+
+        <a class="quest-card" href="stage7.html" data-stage="7" style="--accent:#2f7a3b;--accent-bg:#eaf6ec">
+          <div class="q-top"><span class="q-num">7</span><span class="q-suit" aria-hidden="true">🧭</span></div>
+          <div class="q-meta"><span class="q-tag">最短経路</span><span class="q-time">⏱ 約15分</span></div>
+          <div class="q-title">ダイクストラ法</div>
+          <p class="q-desc">道に長さがあるときは、まだ確定していない町のうち一番近いものから確定する。道の長さ0以上という条件の意味。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
+
+        <a class="quest-card" href="stage8.html" data-stage="8" style="--accent:#a14b7a;--accent-bg:#f9ebf3">
+          <div class="q-top"><span class="q-num">8</span><span class="q-suit" aria-hidden="true">🪜</span></div>
+          <div class="q-meta"><span class="q-tag">動的計画法</span><span class="q-time">⏱ 約14分</span></div>
+          <div class="q-title">再帰と動的計画法</div>
+          <p class="q-desc">階段の上り方を再帰で素直に書くと、同じ計算をくり返して爆発する。表に書いて使い回せば n 回。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
+
+        <a class="quest-card" href="stage9.html" data-stage="9" style="--accent:#3f6191;--accent-bg:#eaf0f8">
+          <div class="q-top"><span class="q-num">9</span><span class="q-suit" aria-hidden="true">🏁</span></div>
+          <div class="q-meta"><span class="q-tag">まとめ</span><span class="q-time">⏱ 約10分</span></div>
+          <div class="q-title">計算量で選ぶ</div>
+          <p class="q-desc">ここまでの手順を計算量で並べ、N を増やして差を見る。速いアルゴリズムの見つけ方と、データ構造の選び方。</p>
+          <span class="q-cta">はじめる →</span>
+        </a>
       </div>
-      <div id="compare-box"></div>
+    </section>
 
-      <footer id="control-bar">
-        <button id="btn-play" title="自動再生">▶ 再生</button>
-        <button id="btn-pause" title="一時停止">⏸ 一時停止</button>
-        <button id="btn-step-anim" title="1ステップ進める">1ステップ</button>
-        <label class="speed-label">速度
-          <input type="range" id="speed-slider" min="0.5" max="3" step="0.5" value="1">
-        </label>
-        <button id="btn-reset" title="ステージをやり直す">↺ ステージリセット</button>
-      </footer>
+    <div id="book-recommend"></div>
+  </main>
 
-      <div id="log-panel">
-        <h3>冒険の記録</h3>
-        <ul id="log-list"></ul>
-      </div>
-
-      <div id="book-recommend"></div>
-
-      <section id="ending-screen" hidden></section>
-    </main>
-  </div>
+  <footer>
+    <p>NO DOWNLOAD. NO REGISTRATION. JUST LEARN. &nbsp;© <span id="year"></span> ruglerugle</p>
+    <div class="footer-suits" aria-hidden="true"><span>🗺️</span><span>🔍</span><span>📦</span><span>🧭</span></div>
+  </footer>
 </div>
-
-<script type="module" src="js/main.js"></script>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script>QUEST.initCoverPage();</script>
 <script src="https://my.habatakijuku.com/sync.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3a2614">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE1 線形探索と計算量 ― アルゴリズムクエスト</title>
+<meta name="description" content="名簿から1人を探すとき、前から順に調べると何回比べることになるか。人数 N に比例して手間が増えることを数え、アルゴリズムの速さを「N が増えたときの手間の増え方」で表す O 記法（計算量）を定義する。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/stage1">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="アルゴリズムクエスト">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE1 線形探索と計算量 ― アルゴリズムクエスト">
+<meta property="og:description" content="前から順に探すと、手間は人数に比例する。アルゴリズムの速さを測る「計算量」の考え方。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/stage1">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="lab.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/labs.js?v=20261108b"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🗺️</a> <span>アルゴリズムクエスト</span></div>
+      <div class="brand-sub">STAGE 1 ― 線形探索と計算量 ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 9</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 1</span><h1 class="chapter-title">線形探索と計算量</h1>
+        <div class="chapter-sub">前から順に調べると、何回かかる？</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">線形探索の比較回数と、O 記法（計算量）の意味を説明できるようになろう。3つの人数で探して比べ、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">この旅で解きたい問題から話そう。ある村の村長が困っている。村の名簿には1万人が載っていて、毎日「○○さんはいますか」と聞かれる。村が大きくなって、いずれ100万人になったら、今のやり方では1日が終わってしまう、と。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">今のやり方というのは？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">名簿の1ページ目から、1人ずつ名前を見比べていく。これを<strong>線形探索</strong>と呼ぶ（線のように端から順にたどるから）。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><strong>この旅で解きたい問題</strong></span>
+        <span class="step">分かっているもの：コンピュータは1回の比較や足し算をとても速くこなせる。でも、データの数が増えると、手間の増え方しだいで現実的な時間に終わらなくなる</span>
+        <span class="step">知りたいもの：同じ答えを、もっと少ない手間で出す手順（アルゴリズム）の作り方。そして、手順の速さを比べる物差し</span>
+        <span class="step">道順：物差し＝計算量（1）→ 探す（2〜3）→ 並べる（4〜5）→ 道を探す（6〜7）→ 同じ計算を省く（8）→ まとめ（9）</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble"><strong>アルゴリズム</strong>というのは、問題を解くための、誰がやっても同じ結果になる手順のことだ。料理のレシピのように、1つ1つの手順がはっきり決まっている。では、線形探索で N 人の名簿から1人を探すとき、比べる回数は何回かな。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 運がよければ1人目で見つかるので1回。運が悪ければ最後の人か、名簿にいない場合で N 回。いない人を探すときは、全員を見ないと「いない」と言えないので、必ず N 回です。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。アルゴリズムの速さを考えるときは、ふつう<strong>一番運が悪い場合</strong>（<strong>最悪の場合</strong>）を考える。「どんなに運が悪くても、これだけあれば終わる」と約束できるからね。ならした平均（<strong>平均の場合</strong>）を考えることもある。線形探索の平均はどのくらい？</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">名簿のどこにいるかが均等なら、真ん中あたりで見つかることが多いので、だいたい N の半分です。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">村長が1人と見比べるのに3秒かかるとしよう。100万人の名簿だと、最悪でどのくらいかかるかな。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 100万 × 3 ＝ 300万秒。1日は 86400 秒だから、約35日。コンピュータならずっと速いですけど、人数に比例して遅くなることは変わらないですね。</div>
+        </div>
+      </div>
+      <div class="lab" data-lab="linear" data-id="algo-s1-linear"></div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そこで大事なのが、「1回が何秒か」ではなく、<strong>N が増えたときに手間がどう増えるか</strong>という見方なんだ。コンピュータを10倍速くしても、手間の増え方が変わらなければ、N が10倍になったら元通りだ。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">この「増え方」を表す書き方が <strong>O 記法</strong>（オーダー記法）だ。線形探索の手間は、最悪で N 回、平均で N の半分。どちらも「N に比例して増える」。こういうとき、細かい係数（半分、3秒など）は気にせずに <strong>O(N)</strong> と書いて「オーダー N」と読む。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">O 記法：N が大きくなったときに、手間が N の何に比例して増えるかだけを書く。係数や、小さい項は無視する</span>
+        <span class="step">例：3N ＋ 5 回 → O(N)　／　N ÷ 2 回 → O(N)　／　N × N 回 → O(N²)　／　N によらず10回 → O(1)</span>
+        <span class="step">この手間の増え方を<strong>計算量</strong>（時間計算量）と呼ぶ。線形探索は O(N)</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">係数を無視していいんですか？ 3N と N では3倍違うのに。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">N が小さいうちは係数も効く。でも N が大きくなると、増え方の違いのほうがずっと大きくなる。たとえば、100N 回かかる手順と、N × N 回かかる手順。N が 10 なら、どちらが速い？</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 100×10＝1000 回と、10×10＝100 回。N × N のほうが速い。でも N が 1000 なら、10万回と100万回で、100N のほうが速くなる。N が 100 を超えたら、ずっと 100N のほうが速いままですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。データが多いときに勝つのは、増え方の小さいほうなんだ。だから、手順を比べるときは、まず O 記法で増え方を比べる。次のステージでは、村長の名簿が「五十音順に並んでいる」ことを使って、O(N) よりずっと増え方の小さい探し方を作ろう。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. N 人の名簿に、探している人がいない場合、線形探索で比べる回数は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">N 回</button>
+          <button class="choice-btn">1回</button>
+          <button class="choice-btn">N の半分</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ いないことを確かめるには、全員を見るしかない。これが線形探索の最悪の場合。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. 手間が「2N ＋ 10 回」の手順の計算量を O 記法で書くと？</p>
+        <div class="choice-list">
+          <button class="choice-btn">O(2N ＋ 10)</button>
+          <button class="choice-btn">O(1)</button>
+          <button class="choice-btn">O(N)</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 係数の2や、足された10は無視して、N に比例することだけを書く。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. アルゴリズムの速さを「N が増えたときの手間の増え方」で比べる理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">コンピュータの速さは、どの機械でも同じだから</button>
+          <button class="choice-btn">データが多くなると、増え方の違いのほうが係数の違いよりずっと大きく効くから</button>
+          <button class="choice-btn">O 記法を使うと、実際の秒数が正確に分かるから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 機械を速くしても増え方は変わらない。N が大きくなるほど、増え方の小さい手順が勝つ。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="./">← トップへ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(1);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

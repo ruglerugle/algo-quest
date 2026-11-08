@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3a2614">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE7 ダイクストラ法 ― アルゴリズムクエスト</title>
+<meta name="description" content="道に長さがあるときの最短経路を求めるダイクストラ法。「まだ確定していない町のうち、いちばん近いものを確定する」をくり返す理由と、道の長さが0以上でなければならない条件、優先度付きキューで速くするしくみを確かめる。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/stage7">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="アルゴリズムクエスト">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE7 ダイクストラ法 ― アルゴリズムクエスト">
+<meta property="og:description" content="道に長さがあるときの最短経路。ダイクストラ法と、その前提条件。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/stage7">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="lab.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/labs.js?v=20261108b"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🗺️</a> <span>アルゴリズムクエスト</span></div>
+      <div class="brand-sub">STAGE 7 ― ダイクストラ法 ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 9</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 7</span><h1 class="chapter-title">ダイクストラ法</h1>
+        <div class="chapter-sub">道に長さがあるときの最短経路</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">ダイクストラ法の手順と、いちばん近い町から確定してよい理由・道の長さが0以上という条件を説明できるようになろう。S から全部の町までの最短距離を求め、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">前のステージの最後の問題だ。道ごとに長さ（距離）が違うとき、S から各町への最短の距離を求めたい。幅優先探索は「本数」の最短しか分からなかった。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">本数が少なくても遠回りのことがありますよね。2本の短い道のほうが、1本の長い道より近いこともある。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。そこで、1959年にエドガー・ダイクストラが考えた方法を使う。考え方の中心はこうだ。「まだ距離が確定していない町のうち、<strong>今の時点でいちばん近いと分かっている町</strong>は、もうそれ以上近くならないので、確定してよい」。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">どうして「もう近くならない」と言えるんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">確かめてみよう。いちばん近い町を X、その仮の距離を d とする。もし、ほかの道を通って X に d より近く行けたとしたら、その道は、どこかで「まだ確定していない町」Y を通るはずだ。Y の仮の距離はどうなっているかな。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> X がいちばん近いので、Y の仮の距離は d 以上。そこから X まで、さらに道を通るので……道の長さが0以上なら、合計は d 以上になる。d より近くはならない。だから X は d で確定していい、ということですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。今の証明で、<strong>道の長さが0以上</strong>という条件を使ったね。もしマイナスの長さの道があったら、遠回りしたあとで距離が減ることがあり得るので、この方法は正しい答えを出せない。これがダイクストラ法の前提条件だ。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">① S の距離を 0、ほかは ∞（まだ分からない）とする</span>
+        <span class="step">② まだ確定していない町のうち、距離がいちばん小さい町を選んで確定する</span>
+        <span class="step">③ その町から道でつながる町について、「確定した町の距離 ＋ 道の長さ」が今の仮の距離より小さければ書き直す</span>
+        <span class="step">④ 全部の町が確定するまで ②③ をくり返す（前提：道の長さはすべて0以上）</span>
+      </div>
+      <div class="lab" data-lab="dijkstra" data-id="algo-s7-dijkstra"></div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">ここで、手間を考えよう。②で「いちばん小さい町」を探すとき、まだ確定していない町を毎回全部見比べると、町の数 V に対して1回 O(V)、それを V 回くり返すので O(V²) になる。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">いちばん小さいものを、もっと早く取り出せればいいですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そのための道具が<strong>優先度付きキュー</strong>だ。中のものを、優先度（ここでは距離）の小さい順にすぐ取り出せるように工夫した入れ物で、よく使われる作り方（ヒープと呼ばれる木の形）なら、入れるのも取り出すのも O(log V) でできる。これを使うと、ダイクストラ法全体の計算量は、道の数を E として <strong>O((V＋E) log V)</strong> になる。町が多くて道が少ない地図なら、O(V²) よりずっと速い。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">地図アプリの道案内も、これを使っているんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">基本の考え方はこれだ。ただ、日本中の道を全部確定していたら遅すぎるので、ゴールの方角を優先して調べる工夫（A* と呼ばれる方法）や、高速道路のような大きな道だけを先にまとめて計算しておく工夫を重ねている。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. ダイクストラ法で、まだ確定していない町のうち距離がいちばん小さい町を「確定してよい」理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">ほかの道は必ず、それ以上の距離の町を通り、道の長さが0以上なので、それより近くならないから</button>
+          <button class="choice-btn">いちばん小さい町は、必ずスタートの隣にあるから</button>
+          <button class="choice-btn">確定した町の数が多いほど、計算が速くなるから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 回り道は、仮の距離が d 以上の未確定の町を通る。道の長さが0以上なら、合計は d 以上になる。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. ダイクストラ法が正しい答えを出せない地図は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">町の数がとても多い地図</button>
+          <button class="choice-btn">行けない町がある地図</button>
+          <button class="choice-btn">長さがマイナスの道がある地図</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ マイナスの道があると、遠回りのあとで距離が減ることがあり、「いちばん近い町は確定してよい」が成り立たない。行けない町は距離が ∞ のまま残るだけ。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. 優先度付きキューを使うと、ダイクストラ法が速くなる理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">道の長さをすべて同じにできるから</button>
+          <button class="choice-btn">「距離がいちばん小さい町」を、毎回全部を見比べずに O(log V) で取り出せるから</button>
+          <button class="choice-btn">確定する町の数を減らせるから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 毎回全部見比べると O(V)。優先度付きキューなら O(log V) で取り出せ、全体で O((V＋E) log V)。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage6.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(7);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

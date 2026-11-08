@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3a2614">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE2 二分探索 ― アルゴリズムクエスト</title>
+<meta name="description" content="名簿が並んでいれば、真ん中と比べて半分を捨てることをくり返せる。1000人でも10回、100万人でも20回で見つかる理由を、「2で何回割れば1になるか」＝ log₂ N で説明する。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/stage2">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="アルゴリズムクエスト">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE2 二分探索 ― アルゴリズムクエスト">
+<meta property="og:description" content="半分に切って探す二分探索。100万人でも20回で見つかる理由と log の意味。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/stage2">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="lab.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/labs.js?v=20261108b"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🗺️</a> <span>アルゴリズムクエスト</span></div>
+      <div class="brand-sub">STAGE 2 ― 二分探索 ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 9</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 2</span><h1 class="chapter-title">二分探索</h1>
+        <div class="chapter-sub">半分に切って log N 回</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">二分探索のしくみと、比べる回数が log₂ N になる理由を説明できるようになろう。1000人の名簿で10回以内に目的の人を見つけ、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">村長の名簿は、実は五十音順に並んでいる。辞書で言葉を引くとき、きみは1ページ目から順にめくる？</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">めくらないです。だいたい真ん中あたりを開いて、探している言葉より前なら前のほう、後なら後ろのほうを開き直します。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">それをきっちり手順にしたのが<strong>二分探索</strong>だ。並んでいる名簿の<strong>真ん中</strong>の人と比べる。探している人が真ん中より前なら、後ろ半分にはいないので、後ろ半分は丸ごと捨てていい。後ろなら前半分を捨てる。残った範囲で、また真ん中と比べる。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 1回比べるごとに、調べる範囲が半分になる。1000人なら、500、250、125、63、32、16、8、4、2、1……10回で1人に絞れます。</div>
+        </div>
+      </div>
+      <div class="lab" data-lab="binary" data-id="algo-s2-binary"></div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">では、N 人のとき何回で1人に絞れるか。「N を2で何回割れば1になるか」だね。この回数を、<strong>2を底とする N の対数</strong>と呼び、<strong>log₂ N</strong>（ログ 2 の N）と書く。2 を何回掛けると N になるか、と言っても同じだ。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">log₂ N ＝ 2 を何回掛けると N になるか（＝ N を2で何回割ると1になるか）</span>
+        <span class="step">log₂ 8 ＝ 3（2×2×2＝8）　／　log₂ 1024 ＝ 10　／　log₂ 約100万 ＝ 約20　／　log₂ 約10億 ＝ 約30</span>
+        <span class="step">二分探索の比べる回数（最悪）：約 log₂ N 回 → 計算量 O(log N)</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">100万人でも20回、10億人でも30回。人数が1000倍になっても、10回増えるだけなんですね。線形探索なら1000倍になるのに。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。O(log N) は、O(N) とは比べものにならないほど増え方が小さい。ここで、二分探索が使える<strong>条件</strong>をはっきりさせておこう。何が必要だったかな。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">名簿が<strong>並んでいる</strong>こと。並んでいないと、真ん中と比べても、どちらの半分にいるか分からない。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">もう1つある。「真ん中の人」に<strong>すぐ行ける</strong>こと。紙の名簿や、番地が連続した配列なら、ページ番号や番地の計算1回で真ん中に行ける。でも、鎖のようにつながった連結リストだと、真ん中に行くには前から半分たどる必要があるので、二分探索の良さが消えてしまう。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">二分探索の条件：① データが並んでいる　② 何番目にでもすぐ行ける（配列など）</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">でも、名簿に新しい人が増えたら、並びを保つために、正しい位置に入れないといけないですよね。その手間は？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">いいところに気づいたね。配列だと、途中に1人入れるには後ろを全部1つずつずらすので、O(N) かかる。探すのは速いけれど、増やすのは遅い。探すのも増やすのも速くしたい、という欲張りな願いに応える方法が、次のステージのハッシュ表だ。それから、そもそも「並べる」こと自体にも手間がかかる。それは STAGE4 と STAGE5 で考えよう。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. 二分探索で、1回比べるごとに起きることは？</p>
+        <div class="choice-list">
+          <button class="choice-btn">調べる範囲が1人ずつ減る</button>
+          <button class="choice-btn">調べる範囲が2倍になる</button>
+          <button class="choice-btn">調べる範囲がおよそ半分になる</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 真ん中と比べれば、探している人がいない側の半分を丸ごと捨てられる。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. 約100万人の並んだ名簿で、二分探索なら最悪およそ何回比べれば見つかる？</p>
+        <div class="choice-list">
+          <button class="choice-btn">約1000回</button>
+          <button class="choice-btn">約20回</button>
+          <button class="choice-btn">約50万回</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 2を20回掛けると約100万（1,048,576）。だから約20回で1人に絞れる。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. 二分探索が使えないのは、どんな場合？</p>
+        <div class="choice-list">
+          <button class="choice-btn">名簿が並んでいない場合</button>
+          <button class="choice-btn">名簿の人数が1000人を超える場合</button>
+          <button class="choice-btn">探している人が名簿にいない場合</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 並んでいなければ、真ん中と比べても、どちらの半分にいるか決められない。いない場合も、範囲が空になったところで「いない」と分かる。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage1.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(2);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

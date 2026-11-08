@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3a2614">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE4 バブルソート ― アルゴリズムクエスト</title>
+<meta name="description" content="二分探索の前提「並んでいる」を作る、並べ替え（ソート）。隣どうしを比べて大きいほうを右へ送るバブルソートを1手ずつ動かし、比べる回数が N(N−1)/2 回、つまり O(N²) になる理由を数える。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/stage4">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="アルゴリズムクエスト">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE4 バブルソート ― アルゴリズムクエスト">
+<meta property="og:description" content="隣どうしを比べて入れ替えるバブルソート。比べる回数 N(N−1)/2 を数える。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/stage4">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="lab.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/labs.js?v=20261108b"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🗺️</a> <span>アルゴリズムクエスト</span></div>
+      <div class="brand-sub">STAGE 4 ― バブルソート ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 9</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 4</span><h1 class="chapter-title">バブルソート</h1>
+        <div class="chapter-sub">隣どうしを比べて N²</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">バブルソートの手順と、比べる回数が N(N−1)/2（O(N²)）になる理由を説明できるようになろう。8個の荷物を並べ終え、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">二分探索には「並んでいる」ことが必要だった。今日は、ばらばらのものを並べる<strong>並べ替え</strong>（<strong>ソート</strong>）を考える。王国の倉庫に、重さのばらばらな荷物が一列に置かれている。軽い順に左から並べたい。ただし、一度に比べられるのは2つの荷物だけ、とする。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">全体を見渡して一番軽いものを探せれば楽ですけど、2つずつしか比べられないと、それも比べ方を決めないといけないですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">一番素朴なやり方から始めよう。左端から、隣どうしを比べて、左のほうが重ければ入れ替える。これを右端まで1周やる。この手順を<strong>バブルソート</strong>と呼ぶ。1周やると、何が起きるかな。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 重い荷物は、比べるたびに右へ送られていく。一番重い荷物は、どこにあっても、そこから先は毎回勝って右へ送られるので、1周すると必ず右端に来ます。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。泡（バブル）が水面へ上がっていくように、大きいものが端へ浮かんでいくので、この名前がある。1周で右端が1つ確定する。次の周は、右端を除いた残りで同じことをすればいい。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">1周目：N 個のうち隣どうしを N−1 回比べる → 一番重いものが右端で確定</span>
+        <span class="step">2周目：残り N−1 個で N−2 回比べる → 2番目に重いものが確定</span>
+        <span class="step">…… 最後の周：残り2個で1回比べる</span>
+      </div>
+      <div class="lab" data-lab="bubble" data-id="algo-s4-bubble"></div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">比べる回数の合計を、N 個の場合で式にしてごらん。足し算は、同じ式を逆の順番でもう1つ書いて、上下に足すと楽になるよ。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> (N−1) ＋ (N−2) ＋ … ＋ 1。逆順に書いた 1 ＋ 2 ＋ … ＋ (N−1) と上下に足すと、どの組も N で、それが N−1 組。2つ分の合計が N(N−1) なので、1つ分はその半分です。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">1 ＋ 2 ＋ … ＋ (N−1) ＝ N(N−1) ÷ 2</span>
+        <span class="step">N ＝ 8 なら 8×7÷2 ＝ 28 回　／　N ＝ 1000 なら 約50万回　／　N ＝ 100万 なら 約5000億回</span>
+        <span class="step">N(N−1)/2 ＝ (N² − N)/2 → いちばん大きく効くのは N² の項 → 計算量 O(N²)</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">N が10倍になると、比べる回数は約100倍。100万個を並べるのに5000億回……。二分探索で20回で探せても、その前の並べ替えでこれでは意味がないですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そうなんだ。O(N²) は、N が大きくなるととても重い。バブルソートは、どんな並びでも同じ回数だけ比べる（入れ替えの回数は並びによる）。わかりやすい代わりに遅い。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">もっと速く並べる方法はあるんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">ある。鍵は、<strong>1回の比較で分かったことを、もっと有効に使う</strong>ことだ。バブルソートは、隣どうしの比較の結果を、その2つの順番にしか使っていない。次のステージでは、1つの基準と比べて全体を2つのグループに分けてしまう方法を見よう。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. バブルソートで1周（左端から右端まで）比べ終わると、必ず何が起きる？</p>
+        <div class="choice-list">
+          <button class="choice-btn">いちばん大きいものが右端に来て、位置が確定する</button>
+          <button class="choice-btn">いちばん小さいものが右端に来る</button>
+          <button class="choice-btn">全体が並び終わる</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 一番大きいものは、比べるたびに右へ送られ続けるので、1周で必ず右端に来る。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. 10個の荷物をバブルソートで並べるとき、比べる回数は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">10回</button>
+          <button class="choice-btn">100回</button>
+          <button class="choice-btn">45回</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 9＋8＋…＋1 ＝ 10×9÷2 ＝ 45回。N(N−1)/2。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. バブルソートの計算量は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">O(N)</button>
+          <button class="choice-btn">O(N²)</button>
+          <button class="choice-btn">O(log N)</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ N(N−1)/2 ＝ (N²−N)/2。N が大きいとき効くのは N² の項なので O(N²)。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage3.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(4);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

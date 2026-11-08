@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3a2614">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>全ステージクリア ― アルゴリズムクエスト</title>
+<meta name="description" content="同じ答えを、もっと少ない手間で出すには。線形探索と計算量（O記法）、二分探索、ハッシュ表、バブルソート、クイックソート、キューと幅優先探索、ダイクストラ法、再帰と動的計画法まで、手を動かしながら手間を数えて確かめる全9ステージの無料学習サイト。ねこ博士とうさ美が案内します。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/algo-quest/complete">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="アルゴリズムクエスト">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="全ステージクリア ― アルゴリズムクエスト">
+<meta property="og:description" content="同じ答えを、もっと少ない手間で。探索・ソート・最短経路・動的計画法を、手間を数えて確かめる全9ステージ。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/algo-quest/complete">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/algo-quest.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<div class="shell">
+  <nav class="topbar" aria-label="サイト情報">
+    <span class="brand-badge" aria-hidden="true">🗺️</span>
+    <span class="brand-copy">
+      <strong>アルゴリズムクエスト</strong>
+      <small>ALGORITHM QUEST</small>
+    </span>
+    <a class="head-reset" style="margin-left:auto" href="/" title="情報の冒険（シリーズの地図）へ">🧭 シリーズの地図</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <h1><span class="line">手間の数え方、身についた ∎</span></h1>
+      <p>前から順に O(N)、半分を捨てて O(log N)、棚を計算して O(1)。隣どうしの O(N²) から、分けて任せる O(N log N)。キューで近い順に広げ、いちばん近い町から確定し、同じ計算は表に書いて使い回す。速い手順の秘密は「捨てる・分ける・覚える」と、データの置き方だった。旅の記録で振り返ろう。</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="board" aria-labelledby="recap-heading">
+      <div class="board-head">
+        <div><h2 id="recap-heading">ここまでの旅を振り返ろう</h2></div>
+        <p>全9ステージ、おつかれさま</p>
+      </div>
+      <div class="recap-list">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-body">
+            <div class="recap-title">線形探索と計算量</div>
+            <div class="recap-desc">線形探索は最悪 N 回、平均 N/2 回で O(N)。速さは「N が増えたときの手間の増え方」で比べ、係数や小さい項は無視して O 記法で書く。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-body">
+            <div class="recap-title">二分探索</div>
+            <div class="recap-desc">真ん中と比べて半分を捨てる。log₂ N 回で1人に絞れ、O(log N)。条件は、並んでいることと、何番目にもすぐ行けること。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-body">
+            <div class="recap-title">ハッシュ表</div>
+            <div class="recap-desc">ハッシュ関数で棚を決め、同じ計算で探す。衝突は棚の中の列で対処し、負荷率を小さく保てば平均 O(1)。順番や範囲は苦手。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-body">
+            <div class="recap-title">バブルソート</div>
+            <div class="recap-desc">1周で一番大きいものが右端で確定。比べる回数は (N−1)＋…＋1 ＝ N(N−1)/2 で O(N²)。N が10倍なら手間は100倍。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-body">
+            <div class="recap-title">クイックソート</div>
+            <div class="recap-desc">基準で分けると基準の位置は確定。半分ずつなら1段 N 回 × log₂ N 段で O(N log N)。並んだ入力に右端の基準だと O(N²)。マージソートは最悪でも O(N log N)。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">6</div>
+          <div class="recap-body">
+            <div class="recap-title">キューと幅優先探索</div>
+            <div class="recap-desc">キュー（FIFO）で近い順に広げるので、初めて届いた歩数が最少。O(V＋E)。スタック（LIFO）を使うと深さ優先探索になり、最短とは限らない。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">7</div>
+          <div class="recap-body">
+            <div class="recap-title">ダイクストラ法</div>
+            <div class="recap-desc">一番近い未確定の町は、それ以上近くならない（道の長さが0以上だから）。優先度付きキューで O((V＋E) log V)。マイナスの道があると使えない。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">8</div>
+          <div class="recap-body">
+            <div class="recap-title">再帰と動的計画法</div>
+            <div class="recap-desc">ways(n) ＝ ways(n−1) ＋ ways(n−2)。素朴な再帰は同じ小問題を何度も計算して指数的に増える。表に書いて使い回せば O(n)。終わりの条件を忘れずに。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">9</div>
+          <div class="recap-body">
+            <div class="recap-title">計算量で選ぶ</div>
+            <div class="recap-desc">速い手順の考え方は「捨てる・分ける・覚える」。データ構造の得意・不得意とセットで選ぶ。時間とメモリの取り引きも物差しになる。</div>
+          </div>
+        </div>
+      </div>
+      <div class="complete-actions">
+        <a class="btn btn-primary" href="/oop-game/">次の旅へ：オブジェクト指向クエスト →</a>
+        <a class="btn" href="./">トップへ戻る</a>
+        <a class="btn" href="https://x.com/intent/post?text=%E3%82%A2%E3%83%AB%E3%82%B4%E3%83%AA%E3%82%BA%E3%83%A0%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%82%92%E5%85%A89%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%82%AF%E3%83%AA%E3%82%A2%E3%81%97%E3%81%9F%EF%BC%81&url=https%3A%2F%2Finformatics.habatakijuku.com%2Falgo-quest%2F" target="_blank" rel="noopener">𝕏 でシェア</a>
+        <button class="btn" id="btn-reset-all">🔄 最初から</button>
+      </div>
+    </section>
+    <div id="book-recommend"></div>
+  </main>
+
+  <footer>
+    <p>NO DOWNLOAD. NO REGISTRATION. JUST LEARN. &nbsp;© <span id="year"></span> ruglerugle</p>
+    <div class="footer-suits" aria-hidden="true"><span>🗺️</span><span>🔍</span><span>📦</span><span>🧭</span></div>
+  </footer>
+</div>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script>QUEST.initCompletePage();</script>
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>
